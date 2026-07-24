@@ -41,7 +41,7 @@ try:
     st.sidebar.header("🔍 Filtros Dinámicos")
 
     # BOTÓN PARA LIMPIAR FILTROS
-    st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
+    st.sidebar.button("🧹 Limpiar Filtros", on_click=reset_filtros, use_container_width=True)
     st.sidebar.markdown("---")
 
     # FILTRO 1 (Padre): Selección de Década(s)
