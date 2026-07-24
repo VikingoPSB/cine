@@ -8,9 +8,8 @@ st.set_page_config(page_title="Dashboard Taquilla Cine (1986-2026)", layout="wid
 @st.cache_data
 def load_data():
     df = pd.read_csv("dataset_minado.csv")
-    # Asegurar que el año sea numérico entero
     if 'anio' in df.columns:
-        df['anio'] = pd.to_numeric(df['anio'], errors='coerce')
+        df['anio'] = pd.to_numeric(df['anio'], errors='coerce').dropna().astype(int)
     return df
 
 try:
@@ -20,39 +19,44 @@ try:
     st.markdown("Visualización interactiva de minería de datos sobre el éxito comercial y la respuesta de la audiencia.")
 
     # --------------------------------------------------------------------------
-    # FILTROS EN LA BARRA LATERAL
+    # FILTROS EN CASCADA EN LA BARRA LATERAL
     # --------------------------------------------------------------------------
-    st.sidebar.header("🔍 Filtros de Búsqueda")
+    st.sidebar.header("🔍 Filtros Dinámicos")
 
-    # Obtener el rango de años dinámicamente según el dataset
-    min_year = int(df['anio'].min()) if 'anio' in df.columns else 1986
-    max_year = int(df['anio'].max()) if 'anio' in df.columns else 2026
+    # FILTRO 1 (Padre): Selección de Década(s)
+    todas_decadas = sorted(df['decada'].dropna().unique())
+    decada_sel = st.sidebar.multiselect(
+        "1. Filtrar por Década(s):",
+        options=todas_decadas,
+        default=todas_decadas
+    )
 
-    # FILTRO 1: Rango de Años (Slider)
+    # Filtrar dataset preliminar según las décadas elegidas para refrescar el rango de años
+    if decada_sel:
+        df_decada_filtrada = df[df['decada'].isin(decada_sel)]
+    else:
+        df_decada_filtrada = df.copy()
+
+    # Obtener el rango de años dinámico ajustado
+    min_year_dinamico = int(df_decada_filtrada['anio'].min()) if len(df_decada_filtrada) > 0 else 1986
+    max_year_dinamico = int(df_decada_filtrada['anio'].max()) if len(df_decada_filtrada) > 0 else 2026
+
+    # FILTRO 2 (Hijo): Slider de Años que responde al Filtro 1
     rango_anios = st.sidebar.slider(
-        "Seleccionar Rango de Años:",
-        min_value=min_year,
-        max_value=max_year,
-        value=(min_year, max_year),
+        "2. Rango de Años (Refrescado por Década):",
+        min_value=min_year_dinamico,
+        max_value=max_year_dinamico,
+        value=(min_year_dinamico, max_year_dinamico),
         step=1
     )
 
-    # FILTRO 2: Selección de Décadas (Multiselect complementario)
-    decada_sel = st.sidebar.multiselect(
-        "Filtrar por Década(s):",
-        options=df['decada'].dropna().unique(),
-        default=df['decada'].dropna().unique()
-    )
-
-    # Aplicación combinada de filtros
-    df_filtered = df[
-        (df['anio'] >= rango_anios[0]) & 
-        (df['anio'] <= rango_anios[1]) & 
-        (df['decada'].isin(decada_sel))
+    # Dataset filtrado definitivo
+    df_filtered = df_decada_filtrada[
+        (df_decada_filtrada['anio'] >= rango_anios[0]) & 
+        (df_decada_filtrada['anio'] <= rango_anios[1])
     ]
 
-    # Indicador visual del rango seleccionado
-    st.sidebar.info(f"Mostrando datos desde **{rango_anios[0]}** hasta **{rango_anios[1]}** ({len(df_filtered)} registros)")
+    st.sidebar.info(f"Mostrando **{len(df_filtered)}** películas entre **{rango_anios[0]}** y **{rango_anios[1]}**.")
 
     # --------------------------------------------------------------------------
     # MÉTRICAS CLAVE
@@ -65,12 +69,51 @@ try:
     st.markdown("---")
 
     if len(df_filtered) == 0:
-        st.warning("⚠️ No hay datos para el rango de años y décadas seleccionado. Intenta ampliar el filtro.")
+        st.warning("⚠️ No se encontraron registros con la combinación de filtros seleccionada.")
     else:
         # ----------------------------------------------------------------------
-        # GRÁFICO 1: Scatter Plot (Relación Votos vs Recaudación por Cluster)
+        # REQUISITO ADICIONAL: RANKING TOP PELÍCULAS MÁS TAQUILLERAS
         # ----------------------------------------------------------------------
-        st.subheader(f"1. Relación Votos vs. Recaudación USD ({rango_anios[0]} - {rango_anios[1]})")
+        st.subheader("🏆 Ranking Top de Películas Más Taquilleras")
+        
+        col_rank_num, _ = st.columns([1, 3])
+        with col_rank_num:
+            top_n = st.selectbox("Mostrar Top:", options=[5, 10, 15, 20], index=1)
+
+        # Preparación de la tabla de ranking
+        df_ranking = df_filtered.sort_values(by='recaudacion_usd', ascending=False).head(top_n).copy()
+        
+        # Asignar medallas para los primeros puestos
+        posiciones = []
+        for i in range(1, len(df_ranking) + 1):
+            if i == 1:
+                posiciones.append("🥇 1°")
+            elif i == 2:
+                posiciones.append("🥈 2°")
+            elif i == 3:
+                posiciones.append("🥉 3°")
+            else:
+                posiciones.append(f"{i}°")
+        
+        df_ranking.insert(0, "Puesto", posiciones)
+        
+        # Formatear la tabla de presentación
+        df_ranking_display = df_ranking[['Puesto', 'titulo_final', 'anio', 'recaudacion_usd', 'promedio_votos', 'conteo_votos', 'cluster']].copy()
+        df_ranking_display.columns = ['Posición', 'Título', 'Año', 'Recaudación Mundial (USD)', 'Nota Promedio', 'Total Votos', 'Cluster']
+        
+        # Formatear número monetario
+        df_ranking_display['Recaudación Mundial (USD)'] = df_ranking_display['Recaudación Mundial (USD)'].map('${:,.0f}'.format)
+        
+        st.dataframe(df_ranking_display, use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+
+        # ----------------------------------------------------------------------
+        # GRÁFICOS INTERACTIVOS
+        # ----------------------------------------------------------------------
+        st.subheader("📊 Visualización de Patrones e Interacciones")
+        
+        # Gráfico 1: Scatter Plot
         fig1 = px.scatter(
             df_filtered,
             x="conteo_votos",
@@ -80,32 +123,26 @@ try:
             hover_data=["anio", "promedio_votos"],
             log_x=True,
             log_y=True,
-            title="Escala Logarítmica: Votos vs. Recaudación USD"
+            title="1. Votos vs. Recaudación USD (Escala Logarítmica)"
         )
         st.plotly_chart(fig1, use_container_width=True)
 
         col_g2, col_g3 = st.columns(2)
 
-        # ----------------------------------------------------------------------
-        # GRÁFICO 2: Evolución Anual de Recaudación / Boxplot
-        # ----------------------------------------------------------------------
+        # Gráfico 2: Distribución
         with col_g2:
-            st.subheader("2. Evolución de Ingresos por Década")
             fig2 = px.box(
                 df_filtered,
                 x="decada",
                 y="recaudacion_usd",
                 color="decada",
                 log_y=True,
-                title="Distribución de Recaudación en Período Seleccionado"
+                title="2. Distribución de Recaudación por Década"
             )
             st.plotly_chart(fig2, use_container_width=True)
 
-        # ----------------------------------------------------------------------
-        # GRÁFICO 3: Calificación vs. Popularidad
-        # ----------------------------------------------------------------------
+        # Gráfico 3: Calificación vs Popularidad
         with col_g3:
-            st.subheader("3. Calificación de Audiencia vs. Popularidad")
             fig3 = px.scatter(
                 df_filtered,
                 x="promedio_votos",
@@ -113,9 +150,9 @@ try:
                 size="recaudacion_usd",
                 color="cluster",
                 hover_name="titulo_final",
-                title="Relación Nota vs. Popularidad (Tamaño = Recaudación USD)"
+                title="3. Nota Audiencia vs. Popularidad (Tamaño = Recaudación)"
             )
             st.plotly_chart(fig3, use_container_width=True)
 
 except Exception as e:
-    st.error(f"Error al cargar los datos o el dashboard. Verifica que 'dataset_minado.csv' esté en el repositorio. Detalle: {e}")
+    st.error(f"Error al cargar el Dashboard. Detalle: {e}")
