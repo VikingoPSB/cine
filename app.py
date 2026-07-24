@@ -24,19 +24,22 @@ try:
     todas_decadas = sorted(df['decada'].dropna().unique()) if 'decada' in df.columns else []
     min_year_global = int(df['anio'].min()) if 'anio' in df.columns else 1986
     max_year_global = int(df['anio'].max()) if 'anio' in df.columns else 2026
+    
+    # Lista de años ordenados para el desplegable
+    lista_anios_disponibles = ["Todos los años"] + sorted(df['anio'].unique().tolist(), reverse=True)
 
     # Inicializar estado si no existe
     if 'decada_sel' not in st.session_state:
         st.session_state.decada_sel = todas_decadas
     if 'rango_anios' not in st.session_state:
         st.session_state.rango_anios = (min_year_global, max_year_global)
-    if 'anio_especifico' not in st.session_state:
-        st.session_state.anio_especifico = 0
+    if 'anio_desplegable' not in st.session_state:
+        st.session_state.anio_desplegable = "Todos los años"
 
     def reset_filtros():
         st.session_state.decada_sel = todas_decadas
         st.session_state.rango_anios = (min_year_global, max_year_global)
-        st.session_state.anio_especifico = 0
+        st.session_state.anio_desplegable = "Todos los años"
 
     # --------------------------------------------------------------------------
     # FILTROS EN LA BARRA LATERAL
@@ -47,15 +50,13 @@ try:
     st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
     st.sidebar.markdown("---")
 
-    # FILTRO 1: Búsqueda por Año Específico (Textbox / Number Input)
+    # FILTRO 1: Selección por Lista Desplegable (Año Exacto)
     st.sidebar.subheader("1. Filtrar por Año Exacto")
-    anio_especifico = st.sidebar.number_input(
-        f"Ingresa un año ({min_year_global} - {max_year_global}) o 0 para todos:",
-        min_value=0,
-        max_value=max_year_global,
-        step=1,
-        key='anio_especifico',
-        help="Si ingresas un año válido (ej: 1999), anulará el rango de años para enfocarse solo en ese año."
+    anio_seleccionado = st.sidebar.selectbox(
+        "Selecciona un año específico:",
+        options=lista_anios_disponibles,
+        key='anio_desplegable',
+        help="Si seleccionas un año específico, anulará los demás filtros para enfocarse en ese año."
     )
 
     st.sidebar.markdown("---")
@@ -90,12 +91,12 @@ try:
     # --------------------------------------------------------------------------
     # APLICACIÓN DE LA LÓGICA DE FILTRADO
     # --------------------------------------------------------------------------
-    # Si se ingresó un año específico válido en el textbox, se aplica ese filtro prioritario
-    if anio_especifico >= min_year_global and anio_especifico <= max_year_global:
-        df_filtered = df[df['anio'] == anio_especifico]
-        st.sidebar.success(f"🎯 Filtrando únicamente el año: **{anio_especifico}**")
+    # Si se eligió un año en particular (distinto a "Todos los años"), se aplica de forma prioritaria
+    if anio_seleccionado != "Todos los años":
+        df_filtered = df[df['anio'] == int(anio_seleccionado)]
+        st.sidebar.success(f"🎯 Filtrando únicamente el año: **{anio_seleccionado}**")
     else:
-        # De lo contrario, se aplica la combinación de Década + Rango de Años
+        # De lo contrario, se filtra por la combinación de Décadas + Rango de Años
         df_filtered = df_decada_filtrada[
             (df_decada_filtrada['anio'] >= rango_anios[0]) & 
             (df_decada_filtrada['anio'] <= rango_anios[1])
@@ -113,7 +114,7 @@ try:
     st.markdown("---")
 
     if len(df_filtered) == 0:
-        st.warning("⚠️ No se encontraron registros con la combinación de filtros seleccionada. Intenta ingresar otro año o usa el botón 'Limpiar / Resetear Filtros'.")
+        st.warning("⚠️ No se encontraron registros con la combinación de filtros seleccionada. Usa el botón 'Limpiar / Resetear Filtros'.")
     else:
         # ----------------------------------------------------------------------
         # RANKING TOP PELÍCULAS MÁS TAQUILLERAS
