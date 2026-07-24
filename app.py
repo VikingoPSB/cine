@@ -60,7 +60,7 @@ try:
     st.sidebar.header("🔍 Filtros Reactivos en Cascada")
 
     # Botón de reseteo
-    st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
+    st.sidebar.button("🧹 Limpiar Filtros", on_click=reset_filtros, use_container_width=True)
     st.sidebar.markdown("---")
 
     # FILTRO 1: Selección de Décadas (Padre)
