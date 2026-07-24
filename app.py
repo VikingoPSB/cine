@@ -14,94 +14,114 @@ def load_data():
 
 try:
     df = load_data()
-    
+
     st.title("🎬 Dashboard Interactivo: Análisis de Taquilla (1986 - 2026)")
     st.markdown("Visualización interactiva de minería de datos sobre el éxito comercial y la respuesta de la audiencia.")
 
     # --------------------------------------------------------------------------
-    # LÓGICA DE REINICIO DE FILTROS (st.session_state)
+    # LISTAS GLOBALES
     # --------------------------------------------------------------------------
     todas_decadas = sorted(df['decada'].dropna().unique()) if 'decada' in df.columns else []
-    min_year_global = int(df['anio'].min()) if 'anio' in df.columns else 1986
-    max_year_global = int(df['anio'].max()) if 'anio' in df.columns else 2026
-    
-    # Lista de años ordenados para el desplegable
-    lista_anios_disponibles = ["Todos los años"] + sorted(df['anio'].unique().tolist(), reverse=True)
+    todos_anios = sorted(df['anio'].unique().tolist(), reverse=True) if 'anio' in df.columns else []
+    min_year_global = min(todos_anios) if todos_anios else 1986
+    max_year_global = max(todos_anios) if todos_anios else 2026
 
-    # Inicializar estado si no existe
+    # --------------------------------------------------------------------------
+    # INICIALIZACIÓN DE SESSION STATE
+    # --------------------------------------------------------------------------
     if 'decada_sel' not in st.session_state:
         st.session_state.decada_sel = todas_decadas
     if 'rango_anios' not in st.session_state:
         st.session_state.rango_anios = (min_year_global, max_year_global)
-    if 'anio_desplegable' not in st.session_state:
-        st.session_state.anio_desplegable = "Todos los años"
+    if 'anio_exacto' not in st.session_state:
+        st.session_state.anio_exacto = "Todos los años"
 
+    # --------------------------------------------------------------------------
+    # FUNCIONES DE CALLBACK PARA REFRESCO MUTUO DE FILTROS
+    # --------------------------------------------------------------------------
     def reset_filtros():
         st.session_state.decada_sel = todas_decadas
         st.session_state.rango_anios = (min_year_global, max_year_global)
-        st.session_state.anio_desplegable = "Todos los años"
+        st.session_state.anio_exacto = "Todos los años"
+
+    def al_cambiar_anio_exacto():
+        # Si el usuario selecciona un año específico, sincroniza el slider al año único
+        if st.session_state.anio_exacto != "Todos los años":
+            anio = int(st.session_state.anio_exacto)
+            st.session_state.rango_anios = (anio, anio)
+            # Encuentra la década correspondiente a ese año y la selecciona
+            decada_del_anio = df[df['anio'] == anio]['decada'].dropna().unique().tolist()
+            if decada_del_anio:
+                st.session_state.decada_sel = decada_del_anio
 
     # --------------------------------------------------------------------------
-    # FILTROS EN LA BARRA LATERAL
+    # BARRA LATERAL CON FILTROS DINÁMICOS
     # --------------------------------------------------------------------------
-    st.sidebar.header("🔍 Filtros Dinámicos")
+    st.sidebar.header("🔍 Filtros Reactivos en Cascada")
 
-    # BOTÓN PARA LIMPIAR FILTROS
+    # Botón de reseteo
     st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
     st.sidebar.markdown("---")
 
-    # FILTRO 1: Selección por Lista Desplegable (Año Exacto)
-    st.sidebar.subheader("1. Filtrar por Año Exacto")
-    anio_seleccionado = st.sidebar.selectbox(
-        "Selecciona un año específico:",
-        options=lista_anios_disponibles,
-        key='anio_desplegable',
-        help="Si seleccionas un año específico, anulará los demás filtros para enfocarse en ese año."
-    )
-
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("2. Filtros Generales")
-
-    # FILTRO 2: Selección de Década(s)
-    decada_sel = st.sidebar.multiselect(
-        "Filtrar por Década(s):",
+    # FILTRO 1: Selección de Décadas (Padre)
+    st.sidebar.multiselect(
+        "1. Filtrar por Década(s):",
         options=todas_decadas,
         key='decada_sel'
     )
 
-    # Filtrar dataset preliminar por década
-    if decada_sel:
-        df_decada_filtrada = df[df['decada'].isin(decada_sel)]
+    # Filtrar el dataframe según las décadas seleccionadas para refrescar la lista de años
+    if st.session_state.decada_sel:
+        df_decada_temp = df[df['decada'].isin(st.session_state.decada_sel)]
     else:
-        df_decada_filtrada = df.copy()
+        df_decada_temp = df.copy()
 
-    # Obtener el rango de años dinámico
-    min_year_dinamico = int(df_decada_filtrada['anio'].min()) if len(df_decada_filtrada) > 0 else min_year_global
-    max_year_dinamico = int(df_decada_filtrada['anio'].max()) if len(df_decada_filtrada) > 0 else max_year_global
+    anios_permitidos = sorted(df_decada_temp['anio'].unique().tolist(), reverse=True)
+    opciones_desplegable = ["Todos los años"] + [str(a) for a in anios_permitidos]
+
+    # Validar que la opción seleccionada exista en el conjunto filtrado por década
+    if str(st.session_state.anio_exacto) not in opciones_desplegable:
+        st.session_state.anio_exacto = "Todos los años"
+
+    # FILTRO 2: Año Exacto (Refrescado por la Década elegida)
+    st.sidebar.selectbox(
+        "2. Filtrar por Año Exacto (Refrescado por Década):",
+        options=opciones_desplegable,
+        key='anio_exacto',
+        on_change=al_cambiar_anio_exacto,
+        help="Al seleccionar un año, refresca automáticamente el Rango de Años y la Década."
+    )
+
+    # Ajustar límites del slider en función de las décadas seleccionadas
+    min_year_din = int(df_decada_temp['anio'].min()) if len(df_decada_temp) > 0 else min_year_global
+    max_year_din = int(df_decada_temp['anio'].max()) if len(df_decada_temp) > 0 else max_year_global
+
+    # Validar que el rango del slider esté dentro del rango permitido
+    rango_actual = st.session_state.rango_anios
+    nuevo_min = max(rango_actual[0], min_year_din)
+    nuevo_max = min(rango_actual[1], max_year_din)
+    if nuevo_min > nuevo_max:
+        nuevo_min, nuevo_max = min_year_din, max_year_din
+    st.session_state.rango_anios = (nuevo_min, nuevo_max)
 
     # FILTRO 3: Slider de Rango de Años
-    rango_anios = st.sidebar.slider(
-        "Rango de Años:",
-        min_value=min_year_dinamico,
-        max_value=max_year_dinamico,
+    st.sidebar.slider(
+        "3. Rango de Años:",
+        min_value=min_year_din,
+        max_value=max_year_din,
         key='rango_anios',
         step=1
     )
 
     # --------------------------------------------------------------------------
-    # APLICACIÓN DE LA LÓGICA DE FILTRADO
+    # APLICACIÓN DEL FILTRADO FINAL
     # --------------------------------------------------------------------------
-    # Si se eligió un año en particular (distinto a "Todos los años"), se aplica de forma prioritaria
-    if anio_seleccionado != "Todos los años":
-        df_filtered = df[df['anio'] == int(anio_seleccionado)]
-        st.sidebar.success(f"🎯 Filtrando únicamente el año: **{anio_seleccionado}**")
-    else:
-        # De lo contrario, se filtra por la combinación de Décadas + Rango de Años
-        df_filtered = df_decada_filtrada[
-            (df_decada_filtrada['anio'] >= rango_anios[0]) & 
-            (df_decada_filtrada['anio'] <= rango_anios[1])
-        ]
-        st.sidebar.info(f"Mostrando **{len(df_filtered)}** películas entre **{rango_anios[0]}** y **{rango_anios[1]}**.")
+    df_filtered = df_decada_temp[
+        (df_decada_temp['anio'] >= st.session_state.rango_anios[0]) &
+        (df_decada_temp['anio'] <= st.session_state.rango_anios[1])
+    ]
+
+    st.sidebar.info(f"Mostrando **{len(df_filtered)}** películas con la combinación activa.")
 
     # --------------------------------------------------------------------------
     # MÉTRICAS CLAVE
@@ -114,21 +134,19 @@ try:
     st.markdown("---")
 
     if len(df_filtered) == 0:
-        st.warning("⚠️ No se encontraron registros con la combinación de filtros seleccionada. Usa el botón 'Limpiar / Resetear Filtros'.")
+        st.warning("⚠️ No hay registros para la combinación de filtros seleccionada. Haz clic en 'Limpiar / Resetear Filtros'.")
     else:
         # ----------------------------------------------------------------------
-        # RANKING TOP PELÍCULAS MÁS TAQUILLERAS
+        # RANKING TOP PELÍCULAS
         # ----------------------------------------------------------------------
         st.subheader("🏆 Ranking Top de Películas Más Taquilleras")
-        
+
         col_rank_num, _ = st.columns([1, 3])
         with col_rank_num:
             top_n = st.selectbox("Mostrar Top:", options=[5, 10, 15, 20], index=1)
 
-        # Preparación de la tabla de ranking
         df_ranking = df_filtered.sort_values(by='recaudacion_usd', ascending=False).head(top_n).copy()
-        
-        # Asignar medallas para los primeros puestos
+
         posiciones = []
         for i in range(1, len(df_ranking) + 1):
             if i == 1:
@@ -139,16 +157,13 @@ try:
                 posiciones.append("🥉 3°")
             else:
                 posiciones.append(f"{i}°")
-        
+
         df_ranking.insert(0, "Puesto", posiciones)
-        
-        # Formatear la tabla de presentación
+
         df_ranking_display = df_ranking[['Puesto', 'titulo_final', 'anio', 'recaudacion_usd', 'promedio_votos', 'conteo_votos', 'cluster']].copy()
         df_ranking_display.columns = ['Posición', 'Título', 'Año', 'Recaudación Mundial (USD)', 'Nota Promedio', 'Total Votos', 'Cluster']
-        
-        # Formatear número monetario
         df_ranking_display['Recaudación Mundial (USD)'] = df_ranking_display['Recaudación Mundial (USD)'].map('${:,.0f}'.format)
-        
+
         st.dataframe(df_ranking_display, use_container_width=True, hide_index=True)
 
         st.markdown("---")
@@ -157,8 +172,7 @@ try:
         # GRÁFICOS INTERACTIVOS
         # ----------------------------------------------------------------------
         st.subheader("📊 Visualización de Patrones e Interacciones")
-        
-        # Gráfico 1: Scatter Plot
+
         fig1 = px.scatter(
             df_filtered,
             x="conteo_votos",
@@ -174,7 +188,6 @@ try:
 
         col_g2, col_g3 = st.columns(2)
 
-        # Gráfico 2: Distribución
         with col_g2:
             fig2 = px.box(
                 df_filtered,
@@ -186,7 +199,6 @@ try:
             )
             st.plotly_chart(fig2, use_container_width=True)
 
-        # Gráfico 3: Calificación vs Popularidad
         with col_g3:
             fig3 = px.scatter(
                 df_filtered,
