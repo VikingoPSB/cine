@@ -35,21 +35,22 @@ try:
         st.session_state.rango_anios = (min_year_global, max_year_global)
     if 'anio_exacto' not in st.session_state:
         st.session_state.anio_exacto = "Todos los años"
+    if 'busqueda_titulo' not in st.session_state:
+        st.session_state.busqueda_titulo = ""
 
     # --------------------------------------------------------------------------
-    # FUNCIONES DE CALLBACK PARA REFRESCO MUTUO DE FILTROS
+    # FUNCIONES DE CALLBACK PARA RESETEO Y REFRESCO
     # --------------------------------------------------------------------------
     def reset_filtros():
         st.session_state.decada_sel = todas_decadas
         st.session_state.rango_anios = (min_year_global, max_year_global)
         st.session_state.anio_exacto = "Todos los años"
+        st.session_state.busqueda_titulo = ""
 
     def al_cambiar_anio_exacto():
-        # Si el usuario selecciona un año específico, sincroniza el slider al año único
         if st.session_state.anio_exacto != "Todos los años":
             anio = int(st.session_state.anio_exacto)
             st.session_state.rango_anios = (anio, anio)
-            # Encuentra la década correspondiente a ese año y la selecciona
             decada_del_anio = df[df['anio'] == anio]['decada'].dropna().unique().tolist()
             if decada_del_anio:
                 st.session_state.decada_sel = decada_del_anio
@@ -57,20 +58,32 @@ try:
     # --------------------------------------------------------------------------
     # BARRA LATERAL CON FILTROS DINÁMICOS
     # --------------------------------------------------------------------------
-    st.sidebar.header("🔍 Filtros Reactivos en Cascada")
+    st.sidebar.header("🔍 Búsqueda y Filtros Reactivos")
 
     # Botón de reseteo
-    st.sidebar.button("🧹 Limpiar Filtros", on_click=reset_filtros, use_container_width=True)
+    st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
     st.sidebar.markdown("---")
 
-    # FILTRO 1: Selección de Décadas (Padre)
+    # FILTRO 0: Búsqueda incremental por Título de Película
+    st.sidebar.subheader("🔎 Búsqueda por Nombre")
+    st.sidebar.text_input(
+        "Escribe el nombre de una película:",
+        key="busqueda_titulo",
+        placeholder="Ej: Matrix, Avatar, Batman...",
+        help="Filtra las películas en tiempo real a medida que escribes."
+    )
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📅 Filtros de Fecha")
+
+    # FILTRO 1: Selección de Décadas
     st.sidebar.multiselect(
         "1. Filtrar por Década(s):",
         options=todas_decadas,
         key='decada_sel'
     )
 
-    # Filtrar el dataframe según las décadas seleccionadas para refrescar la lista de años
+    # Filtrar el dataframe por década para alimentar el desplegable
     if st.session_state.decada_sel:
         df_decada_temp = df[df['decada'].isin(st.session_state.decada_sel)]
     else:
@@ -79,24 +92,21 @@ try:
     anios_permitidos = sorted(df_decada_temp['anio'].unique().tolist(), reverse=True)
     opciones_desplegable = ["Todos los años"] + [str(a) for a in anios_permitidos]
 
-    # Validar que la opción seleccionada exista en el conjunto filtrado por década
     if str(st.session_state.anio_exacto) not in opciones_desplegable:
         st.session_state.anio_exacto = "Todos los años"
 
-    # FILTRO 2: Año Exacto (Refrescado por la Década elegida)
+    # FILTRO 2: Año Exacto
     st.sidebar.selectbox(
-        "2. Filtrar por Año Exacto (Refrescado por Década):",
+        "2. Filtrar por Año Exacto:",
         options=opciones_desplegable,
         key='anio_exacto',
-        on_change=al_cambiar_anio_exacto,
-        help="Al seleccionar un año, refresca automáticamente el Rango de Años y la Década."
+        on_change=al_cambiar_anio_exacto
     )
 
-    # Ajustar límites del slider en función de las décadas seleccionadas
+    # Ajustar límites del slider
     min_year_din = int(df_decada_temp['anio'].min()) if len(df_decada_temp) > 0 else min_year_global
     max_year_din = int(df_decada_temp['anio'].max()) if len(df_decada_temp) > 0 else max_year_global
 
-    # Validar que el rango del slider esté dentro del rango permitido
     rango_actual = st.session_state.rango_anios
     nuevo_min = max(rango_actual[0], min_year_din)
     nuevo_max = min(rango_actual[1], max_year_din)
@@ -104,7 +114,7 @@ try:
         nuevo_min, nuevo_max = min_year_din, max_year_din
     st.session_state.rango_anios = (nuevo_min, nuevo_max)
 
-    # FILTRO 3: Slider de Rango de Años
+    # FILTRO 3: Slider de Rango
     st.sidebar.slider(
         "3. Rango de Años:",
         min_value=min_year_din,
@@ -114,14 +124,22 @@ try:
     )
 
     # --------------------------------------------------------------------------
-    # APLICACIÓN DEL FILTRADO FINAL
+    # APLICACIÓN DE TODOS LOS FILTROS
     # --------------------------------------------------------------------------
+    # 1. Filtro de Rango y Décadas
     df_filtered = df_decada_temp[
         (df_decada_temp['anio'] >= st.session_state.rango_anios[0]) &
         (df_decada_temp['anio'] <= st.session_state.rango_anios[1])
     ]
 
-    st.sidebar.info(f"Mostrando **{len(df_filtered)}** películas con la combinación activa.")
+    # 2. Filtro Incremental por Texto (Búsqueda parcial en 'titulo_final')
+    texto_busqueda = st.session_state.busqueda_titulo.strip()
+    if texto_busqueda:
+        df_filtered = df_filtered[
+            df_filtered['titulo_final'].astype(str).str.contains(texto_busqueda, case=False, na=False)
+        ]
+
+    st.sidebar.info(f"Mostrando **{len(df_filtered)}** películas con los criterios activos.")
 
     # --------------------------------------------------------------------------
     # MÉTRICAS CLAVE
@@ -134,7 +152,7 @@ try:
     st.markdown("---")
 
     if len(df_filtered) == 0:
-        st.warning("⚠️ No hay registros para la combinación de filtros seleccionada. Haz clic en 'Limpiar / Resetear Filtros'.")
+        st.warning(f"⚠️ No se encontraron películas que coincidan con '{texto_busqueda}' y los filtros de fecha. Haz clic en 'Limpiar / Resetear Filtros'.")
     else:
         # ----------------------------------------------------------------------
         # RANKING TOP PELÍCULAS
