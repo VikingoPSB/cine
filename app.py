@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 
 # Configuración inicial de la página
-st.set_page_config(page_title="Dashboard Taquilla Cine (1986-2026)", layout="wide")
+st.set_page_config(page_title="Dashboard Taquilla Cine (1976-2026)", layout="wide")
 
 @st.cache_data
 def load_data():
@@ -15,7 +15,7 @@ def load_data():
 try:
     df = load_data()
 
-    st.title("🎬 Dashboard Interactivo: Análisis de Taquilla (1986 - 2026)")
+    st.title("🎬 Dashboard Interactivo: Análisis de Taquilla (1976 - 2026)")
     st.markdown("Visualización interactiva de minería de datos sobre el éxito comercial y la respuesta de la audiencia.")
 
     # --------------------------------------------------------------------------
@@ -23,7 +23,7 @@ try:
     # --------------------------------------------------------------------------
     todas_decadas = sorted(df['decada'].dropna().unique()) if 'decada' in df.columns else []
     todos_anios = sorted(df['anio'].unique().tolist(), reverse=True) if 'anio' in df.columns else []
-    min_year_global = min(todos_anios) if todos_anios else 1986
+    min_year_global = min(todos_anios) if todos_anios else 1976
     max_year_global = max(todos_anios) if todos_anios else 2026
 
     # --------------------------------------------------------------------------
@@ -61,7 +61,7 @@ try:
     st.sidebar.header("🔍 Búsqueda y Filtros Reactivos")
 
     # Botón de reseteo
-    st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
+    st.sidebar.button("🧹 Limpiar Filtros", on_click=reset_filtros, use_container_width=True)
     st.sidebar.markdown("---")
 
     # FILTRO 0: Búsqueda incremental por Título de Película
