@@ -19,16 +19,36 @@ try:
     st.markdown("Visualización interactiva de minería de datos sobre el éxito comercial y la respuesta de la audiencia.")
 
     # --------------------------------------------------------------------------
-    # FILTROS EN CASCADA EN LA BARRA LATERAL
+    # LÓGICA DE REINICIO / LIMPIEZA DE FILTROS (st.session_state)
+    # --------------------------------------------------------------------------
+    todas_decadas = sorted(df['decada'].dropna().unique()) if 'decada' in df.columns else []
+    min_year_global = int(df['anio'].min()) if 'anio' in df.columns else 1986
+    max_year_global = int(df['anio'].max()) if 'anio' in df.columns else 2026
+
+    # Inicializar estado si no existe
+    if 'decada_sel' not in st.session_state:
+        st.session_state.decada_sel = todas_decadas
+    if 'rango_anios' not in st.session_state:
+        st.session_state.rango_anios = (min_year_global, max_year_global)
+
+    def reset_filtros():
+        st.session_state.decada_sel = todas_decadas
+        st.session_state.rango_anios = (min_year_global, max_year_global)
+
+    # --------------------------------------------------------------------------
+    # FILTROS EN LA BARRA LATERAL
     # --------------------------------------------------------------------------
     st.sidebar.header("🔍 Filtros Dinámicos")
 
+    # BOTÓN PARA LIMPIAR FILTROS
+    st.sidebar.button("🧹 Limpiar / Resetear Filtros", on_click=reset_filtros, use_container_width=True)
+    st.sidebar.markdown("---")
+
     # FILTRO 1 (Padre): Selección de Década(s)
-    todas_decadas = sorted(df['decada'].dropna().unique())
     decada_sel = st.sidebar.multiselect(
         "1. Filtrar por Década(s):",
         options=todas_decadas,
-        default=todas_decadas
+        key='decada_sel'
     )
 
     # Filtrar dataset preliminar según las décadas elegidas para refrescar el rango de años
@@ -38,15 +58,15 @@ try:
         df_decada_filtrada = df.copy()
 
     # Obtener el rango de años dinámico ajustado
-    min_year_dinamico = int(df_decada_filtrada['anio'].min()) if len(df_decada_filtrada) > 0 else 1986
-    max_year_dinamico = int(df_decada_filtrada['anio'].max()) if len(df_decada_filtrada) > 0 else 2026
+    min_year_dinamico = int(df_decada_filtrada['anio'].min()) if len(df_decada_filtrada) > 0 else min_year_global
+    max_year_dinamico = int(df_decada_filtrada['anio'].max()) if len(df_decada_filtrada) > 0 else max_year_global
 
     # FILTRO 2 (Hijo): Slider de Años que responde al Filtro 1
     rango_anios = st.sidebar.slider(
         "2. Rango de Años (Refrescado por Década):",
         min_value=min_year_dinamico,
         max_value=max_year_dinamico,
-        value=(min_year_dinamico, max_year_dinamico),
+        key='rango_anios',
         step=1
     )
 
@@ -69,10 +89,10 @@ try:
     st.markdown("---")
 
     if len(df_filtered) == 0:
-        st.warning("⚠️ No se encontraron registros con la combinación de filtros seleccionada.")
+        st.warning("⚠️ No se encontraron registros con la combinación de filtros seleccionada. Usa el botón 'Limpiar / Resetear Filtros'.")
     else:
         # ----------------------------------------------------------------------
-        # REQUISITO ADICIONAL: RANKING TOP PELÍCULAS MÁS TAQUILLERAS
+        # RANKING TOP PELÍCULAS MÁS TAQUILLERAS
         # ----------------------------------------------------------------------
         st.subheader("🏆 Ranking Top de Películas Más Taquilleras")
         
