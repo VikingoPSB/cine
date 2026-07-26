@@ -469,11 +469,13 @@ with tab3:
     )
 
 with tab4:
-  st.subheader("Conclusiones y Hallazgos Principales")
-  st.markdown("""
-    * **Impacto Digital Moderno y Financiero: Se observa una correlación directa entre el presupuesto asignado y la recaudación obtenida, potenciada por la popularidad en TMDB en la era digital (2010+).**
-    * **Efecto de Clusters:**
-      * *Cluster 0 (Clásicos y Éxitos Moderados): Películas con presupuestos acotados, excelente votación y retorno comercial sostenido.*
-      * *Cluster 1 (Blockbusters Masivos): Producciones de presupuesto elevado y recaudación masiva, dominado por franquicias y sagas globales.*
-      * *Cluster 2 (Rendimiento Medio): Producciones con niveles intermedios de inversión e impacto de taquilla acotado.*
-    """)
+    st.subheader("Conclusiones y Hallazgos Principales")
+    st.markdown(
+        """
+* **Impacto Digital Moderno y Financiero:** Se observa una correlación directa entre el presupuesto asignado y la recaudación obtenida, potenciada por la popularidad en TMDB en la era digital (2010+).
+* **Efecto de Clusters:**
+  * *Cluster 0 (Clásicos y Éxitos Moderados):* Películas con presupuestos acotados, excelente votación y retorno comercial sostenido.
+  * *Cluster 1 (Blockbusters Masivos):* Producciones de presupuesto elevado y recaudación masiva, dominado por franquicias y sagas globales.
+  * *Cluster 2 (Rendimiento Medio):* Producciones con niveles intermedios de inversión e impacto de taquilla acotado.
+"""
+    )
