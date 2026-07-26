@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# 1. CONFIGURACIÓN DE PÁGINA (Ícono de pestaña: Claqueta de Cine)
+# 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(
     page_title="Cinematic Data Mining | Top 50 Años",
     page_icon="🎬",
@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (SIDEBAR)
+# ESTILO CSS PERSONALIZADO (SIN MARCA DE AGUA / ÍCONOS DE FONDO)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -101,14 +101,9 @@ except Exception as e:
     st.error("No se pudo encontrar 'dataset_minado.csv'. Asegurate de tener el archivo en el mismo directorio.")
     st.stop()
 
-# ENCABEZADO PRINCIPAL CON LOGO DE CLAQUETA CINEMATOGRÁFICA
-col_head1, col_head2 = st.columns([0.88, 0.12])
-with col_head1:
-    st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
-    st.markdown("**Proceso KDD integrado:** Scraping + API REST + Clustering K-Means + Modelos Predictivos")
-with col_head2:
-    # Ícono de Claqueta de Cine
-    st.image("https://cdn-icons-png.flaticon.com/512/686/684822.png", width=85)
+# ENCABEZADO PRINCIPAL (SIN ÍCONO)
+st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
+st.markdown("**Proceso KDD integrado:** Scraping + API REST + Clustering K-Means + Modelos Predictivos")
 
 # ==============================================================================
 # INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
