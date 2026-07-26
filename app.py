@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# 1. CONFIGURACIÓN DE PÁGINA
+# 1. CONFIGURACIÓN DE PÁGINA (Ícono de pestaña: Claqueta de Cine)
 st.set_page_config(
     page_title="Cinematic Data Mining | Top 50 Años",
     page_icon="🎬",
@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (SIDEBAR MÁS CLARO + CONTRASTE OPTIMIZADO)
+# ESTILO CSS PERSONALIZADO (SIDEBAR + MARCA DE AGUA CINE)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -21,7 +21,7 @@ estilo_cine_css = """
     color: #0f172a;
 }
 
-/* Cinta de cine decorativa en la esquina superior derecha */
+/* MARCA DE AGUA: Ícono de Claqueta de Cine en la esquina superior derecha */
 .stApp::before {
     content: "";
     position: fixed;
@@ -29,21 +29,21 @@ estilo_cine_css = """
     right: 25px;
     width: 140px;
     height: 140px;
-    background-image: url("https://cdn-icons-png.flaticon.com/512/3172/3172554.png");
+    background-image: url("https://cdn-icons-png.flaticon.com/512/686/684822.png"); /* Claqueta de Cine HD */
     background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.20;
+    opacity: 0.18;
     z-index: 999;
     pointer-events: none;
 }
 
-/* BARRA LATERAL ACLARADA: Tono azul slate medio (#334155) en lugar de azul noche oscuro */
+/* BARRA LATERAL (Sidebar) */
 section[data-testid="stSidebar"] {
     background-color: #334155 !important;
     border-right: 2px solid #cbd5e1;
 }
 
-/* CONTRASTE OPTIMIZADO: Títulos, etiquetas y textos de la barra lateral en Blanco Puro */
+/* Textos e indicadores de la barra lateral en Blanco Puro */
 section[data-testid="stSidebar"] label, 
 section[data-testid="stSidebar"] p, 
 section[data-testid="stSidebar"] h1, 
@@ -55,14 +55,14 @@ section[data-testid="stSidebar"] div {
     font-weight: 600;
 }
 
-/* Estilo y alto contraste para los inputs de texto dentro del Sidebar */
+/* Inputs de texto en la barra lateral */
 section[data-testid="stSidebar"] input {
     background-color: #ffffff !important;
     color: #0f172a !important;
     border-radius: 6px;
 }
 
-/* Estilo y contraste del Botón "Limpiar Filtros" */
+/* Botón Limpiar Filtros */
 section[data-testid="stSidebar"] button {
     background-color: #0284c7 !important;
     color: #ffffff !important;
@@ -77,7 +77,7 @@ section[data-testid="stSidebar"] button:hover {
     transform: scale(1.02);
 }
 
-/* EFECTO RELIEVE EN EL PANEL PRINCIPAL: Tarjetas y Gráficos */
+/* TARJETAS Y GRÁFICOS CON EFECTO DE RELIEVE */
 div[data-testid="stMetric"], .stPlotlyChart {
     background-color: #ffffff;
     padding: 12px;
@@ -117,13 +117,14 @@ except Exception as e:
     st.error("No se pudo encontrar 'dataset_minado.csv'. Asegurate de tener el archivo en el mismo directorio.")
     st.stop()
 
-# ENCABEZADO PRINCIPAL CON LOGO Y TÍTULO
+# ENCABEZADO PRINCIPAL CON LOGO DE CLAQUETA CINEMATOGRÁFICA
 col_head1, col_head2 = st.columns([0.88, 0.12])
 with col_head1:
     st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
     st.markdown("**Proceso KDD integrado:** Scraping + API REST + Clustering K-Means + Modelos Predictivos")
 with col_head2:
-    st.image("https://cdn-icons-png.flaticon.com/512/3172/3172554.png", width=85)
+    # Ícono de Claqueta de Cine
+    st.image("https://cdn-icons-png.flaticon.com/512/686/684822.png", width=85)
 
 # ==============================================================================
 # INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
