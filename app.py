@@ -281,10 +281,10 @@ with tab1:
             df_tabla_ordenada,
             use_container_width=True,
             column_config={
-                "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d"),
                 "titulo_final": "Película",
                 "anio": "Año",
                 "posicion_ranking": st.column_config.NumberColumn("🏆 Puesto Ranking", format="#%d"),
+                "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d"),
                 "popularidad": "Popularidad TMDB",
                 "promedio_votos": "Promedio Votos",
                 "cluster": "Cluster"
