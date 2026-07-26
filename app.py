@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (SIDEBAR + MARCA DE AGUA CINE)
+# ESTILO CSS PERSONALIZADO (SIDEBAR)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -19,22 +19,6 @@ estilo_cine_css = """
 .stApp {
     background-color: #f1f5f9;
     color: #0f172a;
-}
-
-/* MARCA DE AGUA: Ícono de Claqueta de Cine en la esquina superior derecha */
-.stApp::before {
-    content: "";
-    position: fixed;
-    top: 15px;
-    right: 25px;
-    width: 140px;
-    height: 140px;
-    background-image: url("https://cdn-icons-png.flaticon.com/512/686/684822.png"); /* Claqueta de Cine HD */
-    background-size: contain;
-    background-repeat: no-repeat;
-    opacity: 0.18;
-    z-index: 999;
-    pointer-events: none;
 }
 
 /* BARRA LATERAL (Sidebar) */
