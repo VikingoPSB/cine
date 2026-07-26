@@ -11,46 +11,65 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (FONDO LIMPIO + CINTA DE CINE EN ESQUINA)
+# ESTILO CSS PERSONALIZADO (TEMA GRIS CLARO SUAVE + TÍTULOS OSCUROS LEGIBLES)
 # ==============================================================================
 estilo_cine_css = """
 <style>
-/* Fondo oscuro elegante y limpio */
+/* Fondo general gris claro suave (descansa la vista y resalta los gráficos) */
 .stApp {
     background-color: #f1f5f9;
-    color: #f8fafc;
+    color: #0f172a;
 }
 
-/* Imagen decorativa de cinta de cine en la esquina superior derecha */
+/* Cinta de cine decorativa en la esquina superior derecha */
 .stApp::before {
     content: "";
     position: fixed;
     top: 15px;
     right: 25px;
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
     background-image: url("https://cdn-icons-png.flaticon.com/512/3172/3172554.png");
     background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.30;
+    opacity: 0.20;
     z-index: 999;
     pointer-events: none;
 }
 
-/* Barra lateral estilizada */
+/* Barra lateral en tono azul noche para contraste visual */
 section[data-testid="stSidebar"] {
     background-color: #1e293b !important;
-    border-right: 1px solid #334155;
 }
 
-/* Métrica con tono azul brillante */
-div[data-testid="stMetricValue"] {
-    color: #38bdf8 !important;
-}
-
-/* Colores de contraste para títulos */
-h1, h2, h3 {
+/* Textos y etiquetas dentro de la barra lateral en blanco */
+section[data-testid="stSidebar"] label, 
+section[data-testid="stSidebar"] p, 
+section[data-testid="stSidebar"] h1, 
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] span {
     color: #f8fafc !important;
+}
+
+/* Tarjetas de Métricas con fondo blanco y sombra elegante */
+div[data-testid="stMetric"] {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #cbd5e1;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #0284c7 !important;
+    font-weight: bold;
+}
+
+/* Títulos del panel central en Azul Oscuro / Slate para máxima legibilidad */
+.stApp h1, .stApp h2, .stApp h3 {
+    color: #0f172a !important;
+    font-weight: 700;
 }
 </style>
 """
@@ -72,9 +91,9 @@ except Exception as e:
 col_head1, col_head2 = st.columns([0.88, 0.12])
 with col_head1:
     st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
-    st.markdown("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Modelos Predictivos")
+    st.markdown("**Proceso KDD integrado:** Scraping + API REST + Clustering K-Means + Modelos Predictivos")
 with col_head2:
-    st.image("https://cdn-icons-png.flaticon.com/512/3172/3172554.png", width=90)
+    st.image("https://cdn-icons-png.flaticon.com/512/3172/3172554.png", width=85)
 
 # ==============================================================================
 # INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
@@ -96,7 +115,6 @@ if 'filtro_ranking' not in st.session_state:
 if 'filtro_clusters' not in st.session_state:
     st.session_state.filtro_clusters = OPCIONES_CLUSTERS.copy()
 
-# Función de reinicio de filtros
 def reiniciar_filtros():
     st.session_state.filtro_busqueda = ""
     st.session_state.filtro_decadas = OPCIONES_DECADAS.copy()
@@ -109,32 +127,27 @@ def reiniciar_filtros():
 # ==============================================================================
 st.sidebar.header("🔍 Filtros Interactivos")
 
-# 1. Botón de Limpiar Filtros
 st.sidebar.button("🧹 Limpiar todos los filtros", on_click=reiniciar_filtros, use_container_width=True)
 st.sidebar.markdown("---")
 
-# 2. Textbox para buscar película(s) por título
 st.sidebar.text_input(
     "🔎 Buscar por Título:",
     key="filtro_busqueda",
     placeholder="Ej: Avatar, Star Wars..."
 )
 
-# 3. Botonera Múltiple de Décadas
 st.sidebar.multiselect(
     "🗓️ Selección de Décadas:",
     options=OPCIONES_DECADAS,
     key="filtro_decadas"
 )
 
-# 4. Textbox para Año Exacto
 st.sidebar.text_input(
     "📆 Año Específico (Opcional):",
     key="filtro_anio_exacto",
     placeholder="Ej: 1997"
 )
 
-# 5. Slider de Ranking de Taquilla (Box Office Mojo)
 st.sidebar.slider(
     "🏆 Posición en Ranking Anual (Box Office):",
     min_value=MIN_RANKING,
@@ -143,7 +156,6 @@ st.sidebar.slider(
     help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)"
 )
 
-# 6. Filtro Clusters K-Means
 st.sidebar.multiselect(
     "🎯 Cluster (K-Means):",
     options=OPCIONES_CLUSTERS,
@@ -155,19 +167,16 @@ st.sidebar.multiselect(
 # ==============================================================================
 df_filtrado = df.copy()
 
-# A) Filtrar por búsqueda de texto
 if st.session_state.filtro_busqueda.strip() != "":
     df_filtrado = df_filtrado[
         df_filtrado['titulo_final'].str.contains(st.session_state.filtro_busqueda, case=False, na=False)
     ]
 
-# B) Filtrar por décadas
 if st.session_state.filtro_decadas:
     df_filtrado = df_filtrado[df_filtrado['decada'].isin(st.session_state.filtro_decadas)]
 else:
     df_filtrado = df_filtrado.iloc[0:0]
 
-# C) Filtrar por año exacto
 if st.session_state.filtro_anio_exacto.strip() != "":
     try:
         anio_int = int(st.session_state.filtro_anio_exacto.strip())
@@ -175,7 +184,6 @@ if st.session_state.filtro_anio_exacto.strip() != "":
     except ValueError:
         st.sidebar.warning("⚠️ Escribí un año numérico válido (ej: 1999).")
 
-# D) Filtrar por rango de ranking
 r_min, r_max = st.session_state.filtro_ranking
 if 'posicion_ranking' in df_filtrado.columns:
     df_filtrado = df_filtrado[
@@ -183,18 +191,16 @@ if 'posicion_ranking' in df_filtrado.columns:
         (df_filtrado['posicion_ranking'] <= r_max)
     ]
 
-# E) Filtrar por clusters
 if st.session_state.filtro_clusters:
     df_filtrado = df_filtrado[df_filtrado['cluster'].isin(st.session_state.filtro_clusters)]
 else:
     df_filtrado = df_filtrado.iloc[0:0]
 
-# Mensaje de advertencia si no hay coincidencias
 if df_filtrado.empty:
     st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
 
 # ==============================================================================
-# DASHBOARD (PESTAÑAS REFRESCADAS)
+# DASHBOARD (PESTAÑAS CON TÍTULOS Y GRÁFICOS DESTACADOS)
 # ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
@@ -230,7 +236,7 @@ with tab1:
                 color="decada", 
                 marginal="rug",
                 title="Distribución de Recaudación según Filtros",
-                template="plotly_dark"
+                template="plotly_white"
             )
             st.plotly_chart(fig_hist, use_container_width=True)
 
@@ -243,15 +249,14 @@ with tab1:
                 y="titulo_final", 
                 orientation='h', 
                 color="posicion_ranking",
-                color_continuous_scale="Viridis_r",
+                color_continuous_scale="Viridis",
                 title="Top Recaudación en USD (Color por Puesto de Ranking)", 
                 labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"},
-                template="plotly_dark"
+                template="plotly_white"
             )
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
 
-        # Tabla interactiva formateada
         st.markdown("### 📋 Listado Detallado de Películas (Con Ranking Anual)")
         cols_mostrar = ['posicion_ranking', 'titulo_final', 'anio', 'recaudacion_usd', 'popularidad', 'promedio_votos', 'cluster']
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
@@ -279,7 +284,7 @@ with tab2:
             hover_name="titulo_final",
             hover_data=["anio", "posicion_ranking", "recaudacion_usd"],
             title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)",
-            template="plotly_dark"
+            template="plotly_white"
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
 
