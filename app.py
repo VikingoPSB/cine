@@ -270,10 +270,11 @@ with tab1:
             st.plotly_chart(fig_bar, use_container_width=True)
 
         st.markdown("### 📋 Listado Detallado de Películas (Ordenado por Recaudación)")
-        cols_mostrar = ['recaudacion_usd', 'titulo_final', 'anio', 'popularidad', 'promedio_votos', 'cluster']
+        # 'posicion_ranking' ubicado inmediatamente al lado de 'anio'
+        cols_mostrar = ['recaudacion_usd', 'titulo_final', 'anio', 'posicion_ranking', 'popularidad', 'promedio_votos', 'cluster']
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
         
-        # Ordenación estricta descendente por mayor recaudación
+        # Ordenación estricta descendente por recaudación en USD
         df_tabla_ordenada = df_filtrado[cols_existentes].sort_values(by='recaudacion_usd', ascending=False)
         
         st.dataframe(
@@ -283,6 +284,7 @@ with tab1:
                 "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d"),
                 "titulo_final": "Película",
                 "anio": "Año",
+                "posicion_ranking": st.column_config.NumberColumn("🏆 Puesto Ranking", format="#%d"),
                 "popularidad": "Popularidad TMDB",
                 "promedio_votos": "Promedio Votos",
                 "cluster": "Cluster"
