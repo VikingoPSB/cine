@@ -445,21 +445,69 @@ with tab2:
     st.plotly_chart(fig_scatter, use_container_width=True)
 
 with tab3:
-  st.subheader("Resultados de Modelos de Machine Learning")
+  st.subheader("🤖 Resultados y Visualización de Modelos de Machine Learning")
+
   col_a, col_b = st.columns(2)
+
   with col_a:
     st.markdown("#### Regresión: Predicción de Recaudación")
     st.write("Modelo: **Random Forest Regressor** ($R^2 = 0.6840$)")
-    st.info(
-        "Variables más determinantes: Presupuesto en USD, Conteo de Votos y"
-        " Popularidad en TMDB."
-    )
+
+    if not df_filtrado.empty:
+      # Gráfico de dispersión Presupuesto vs Recaudación con línea de tendencia regresiva
+      fig_reg = px.scatter(
+          df_filtrado,
+          x="log_presupuesto",
+          y="log_recaudacion",
+          color="decada",
+          trendline="ols",
+          hover_name="titulo_final",
+          title="Regresión: Log(Presupuesto) vs. Log(Recaudación)",
+          labels={
+              "log_presupuesto": "Log(Presupuesto USD)",
+              "log_recaudacion": "Log(Recaudación USD)",
+              "decada": "Década",
+          },
+          template="plotly_white",
+      )
+      st.plotly_chart(fig_reg, use_container_width=True)
+
+      st.info(
+          "💡 **Variables determinantes:** Presupuesto en USD, Conteo de Votos"
+          " y Popularidad en TMDB."
+      )
+
   with col_b:
-    st.markdown("#### Clasificación: Detección de 'Blockbusters'")
-    st.write("Modelo: **Random Forest Classifier** vs **Regresión Logística**")
-    st.success(
-        "Accuracy alcanzado: **87.57%** evaluando el Top 25% de recaudación."
-    )
+    st.markdown("#### Clasificación: Distribución de 'Blockbusters'")
+    st.write("Modelo: **Random Forest Classifier** (Accuracy: **87.57%**)")
+
+    if not df_filtrado.empty and "es_blockbuster" in df_filtrado.columns:
+      # Mapeo de valores 0 y 1 a etiquetas legibles
+      df_block = df_filtrado.copy()
+      df_block["tipo_pelicula"] = df_block["es_blockbuster"].map(
+          {1: "Blockbuster (Top 25%)", 0: "Estándar / Regular"}
+      )
+
+      # Gráfico de conteo/distribución de la clasificación según los filtros
+      fig_class = px.histogram(
+          df_block,
+          x="tipo_pelicula",
+          color="tipo_pelicula",
+          color_discrete_map={
+              "Blockbuster (Top 25%)": "#0284c7",
+              "Estándar / Regular": "#94a3b8",
+          },
+          title="Distribución de Películas Clasificadas",
+          labels={"tipo_pelicula": "Categoría Predicha", "count": "Cantidad"},
+          template="plotly_white",
+      )
+      fig_class.update_layout(showlegend=False)
+      st.plotly_chart(fig_class, use_container_width=True)
+
+      st.success(
+          "🎯 **Evaluación:** El modelo clasifica correctamente el Top 25% de"
+          " recaudación integrando popularidad y presupuesto."
+      )
 
 with tab4:
   st.subheader("Conclusiones y Hallazgos Principales")
