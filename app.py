@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as gg
 
 st.set_page_config(
     page_title="Cinematic Data Mining | Top 50 Años",
@@ -15,39 +14,114 @@ st.markdown("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + M
 
 @st.cache_data
 def cargar_datos():
-    # Cargar el dataset procesado y minado
     df = pd.read_csv("dataset_minado.csv")
     return df
 
 try:
     df = cargar_datos()
 except Exception as e:
-    st.error("Por favor asegúrate de que 'dataset_minado.csv' esté en el mismo directorio.")
+    st.error("No se pudo encontrar 'dataset_minado.csv'. Asegurate de tener el archivo en el mismo directorio.")
     st.stop()
 
-# --- FILTROS EN BARRA LATERAL ---
+# ==============================================================================
+# INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
+# ==============================================================================
+# Definimos los valores por defecto
+OPCIONES_DECADAS = ['1977-1985', '1986-1995', '1996-2005', '2006-2015', '2016-2026']
+OPCIONES_CLUSTERS = sorted(df['cluster'].unique())
+
+if 'filtro_busqueda' not in st.session_state:
+    st.session_state.filtro_busqueda = ""
+if 'filtro_decadas' not in st.session_state:
+    st.session_state.filtro_decadas = OPCIONES_DECADAS.copy()
+if 'filtro_anio_exacto' not in st.session_state:
+    st.session_state.filtro_anio_exacto = ""
+if 'filtro_clusters' not in st.session_state:
+    st.session_state.filtro_clusters = OPCIONES_CLUSTERS.copy()
+
+# Función para reiniciar los filtros al presionar el botón "Limpiar todo"
+def reiniciar_filtros():
+    st.session_state.filtro_busqueda = ""
+    st.session_state.filtro_decadas = OPCIONES_DECADAS.copy()
+    st.session_state.filtro_anio_exacto = ""
+    st.session_state.filtro_clusters = OPCIONES_CLUSTERS.copy()
+
+# ==============================================================================
+# CONTROLES DE LA BARRA LATERAL (SIDEBAR)
+# ==============================================================================
 st.sidebar.header("🔍 Filtros Interactivos")
 
-anios = st.sidebar.slider(
-    "Rango de Años:",
-    int(df['anio'].min()),
-    int(df['anio'].max()),
-    (1980, 2025)
+# 1. Botón de Limpiar Filtros
+st.sidebar.button("🧹 Limpiar todos los filtros", on_click=reiniciar_filtros, use_container_width=True)
+st.sidebar.markdown("---")
+
+# 2. Textbox para buscar película(s)
+st.sidebar.text_input(
+    "🔎 Buscar por Título:",
+    key="filtro_busqueda",
+    placeholder="Ej: Avatar, Star Wars..."
 )
 
-clusters_sel = st.sidebar.multiselect(
-    "Filtrar por Cluster (K-Means):",
-    options=sorted(df['cluster'].unique()),
-    default=sorted(df['cluster'].unique())
+# 3. Botonera de Selección Múltiple de Décadas
+st.sidebar.multiselect(
+    "🗓️ Selección de Décadas:",
+    options=OPCIONES_DECADAS,
+    key="filtro_decadas"
 )
 
-df_filtrado = df[
-    (df['anio'] >= anios[0]) & 
-    (df['anio'] <= anios[1]) & 
-    (df['cluster'].isin(clusters_sel))
-]
+# 4. Textbox para un Año Exacto
+st.sidebar.text_input(
+    "📆 Año Específico (Opcional):",
+    key="filtro_anio_exacto",
+    placeholder="Ej: 1997"
+)
 
-# --- PESTAÑAS DEL DASHBOARD ---
+# 5. Filtro de Clusters K-Means
+st.sidebar.multiselect(
+    "🎯 Cluster (K-Means):",
+    options=OPCIONES_CLUSTERS,
+    key="filtro_clusters"
+)
+
+# ==============================================================================
+# LÓGICA DE FILTRADO DINÁMICO REFRESCADO
+# ==============================================================================
+df_filtrado = df.copy()
+
+# Filtrar por texto en el título (insensible a mayúsculas/minúsculas)
+if st.session_state.filtro_busqueda.strip() != "":
+    df_filtrado = df_filtrado[
+        df_filtrado['titulo_final'].str.contains(st.session_state.filtro_busqueda, case=False, na=False)
+    ]
+
+# Filtrar por décadas elegidas
+if st.session_state.filtro_decadas:
+    df_filtrado = df_filtrado[df_filtrado['decada'].isin(st.session_state.filtro_decadas)]
+else:
+    # Si desmarca todas las décadas, muestra dataset vacío
+    df_filtrado = df_filtrado.iloc[0:0]
+
+# Filtrar por año exacto si el usuario escribió un número válido
+if st.session_state.filtro_anio_exacto.strip() != "":
+    try:
+        anio_int = int(st.session_state.filtro_anio_exacto.strip())
+        df_filtrado = df_filtrado[df_filtrado['anio'] == anio_int]
+    except ValueError:
+        st.sidebar.warning("⚠️ Escribí un año numérico válido (ej: 1999).")
+
+# Filtrar por clusters
+if st.session_state.filtro_clusters:
+    df_filtrado = df_filtrado[df_filtrado['cluster'].isin(st.session_state.filtro_clusters)]
+else:
+    df_filtrado = df_filtrado.iloc[0:0]
+
+# Mensaje de advertencia si no hay resultados con los filtros aplicados
+if df_filtrado.empty:
+    st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
+
+# ==============================================================================
+# DASHBOARD (PESTAÑAS CON CONTENIDO REFRESCADO)
+# ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
     "🎯 Clustering (K-Means)", 
@@ -56,65 +130,88 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 with tab1:
-    st.subheader("Métricas Generales")
+    st.subheader("Métricas Generales del Conjunto Filtrado")
+    
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Películas Analizadas", len(df_filtrado))
-    col2.metric("Recaudación Promedio", f"${df_filtrado['recaudacion_usd'].mean():,.0f} USD")
-    col3.metric("Popularidad Promedio TMDB", f"{df_filtrado['popularidad'].mean():.1f}")
-    col4.metric("Promedio Votos Público", f"{df_filtrado['promedio_votos'].mean():.1f} / 10")
+    total_pelis = len(df_filtrado)
+    rec_prom = f"${df_filtrado['recaudacion_usd'].mean():,.0f} USD" if total_pelis > 0 else "$0 USD"
+    pop_prom = f"{df_filtrado['popularidad'].mean():.1f}" if total_pelis > 0 else "0"
+    voto_prom = f"{df_filtrado['promedio_votos'].mean():.1f} / 10" if total_pelis > 0 else "0"
+
+    col1.metric("Películas Encontradas", total_pelis)
+    col2.metric("Recaudación Promedio", rec_prom)
+    col3.metric("Popularidad TMDB", pop_prom)
+    col4.metric("Promedio Votos", voto_prom)
 
     st.markdown("---")
-    c1, c2 = st.columns(2)
     
-    with c1:
-        st.markdown("### Distibución de Recaudación Mundial (Log-Scale)")
-        fig_hist = px.histogram(df_filtrado, x="log_recaudacion", color="decada", marginal="rug",
-                                title="Distribución de Recaudación por Década")
-        st.plotly_chart(fig_hist, use_container_width=True)
+    if not df_filtrado.empty:
+        c1, c2 = st.columns(2)
+        
+        with c1:
+            st.markdown("### Distribución de Recaudación Mundial (Escala Log)")
+            fig_hist = px.histogram(
+                df_filtrado, 
+                x="log_recaudacion", 
+                color="decada", 
+                marginal="rug",
+                title="Distribución de Recaudación según Filtro"
+            )
+            st.plotly_chart(fig_hist, use_container_width=True)
 
-    with c2:
-        st.markdown("### Top 10 Películas MÁS Taquilleras del Rango Seleccionado")
-        top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
-        fig_bar = px.bar(top10, x="recaudacion_usd", y="titulo_final", orientation='h', color="recaudacion_usd",
-                         title="Top 10 Películas en USD", labels={"recaudacion_usd": "USD", "titulo_final": "Película"})
-        st.plotly_chart(fig_bar, use_container_width=True)
+        with c2:
+            st.markdown("### Top Películas MÁS Taquilleras del Filtro")
+            top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
+            fig_bar = px.bar(
+                top10, 
+                x="recaudacion_usd", 
+                y="titulo_final", 
+                orientation='h', 
+                color="recaudacion_usd",
+                title="Top Recaudación en USD", 
+                labels={"recaudacion_usd": "USD", "titulo_final": "Película"}
+            )
+            fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        # Tabla interactiva con el listado filtrado
+        st.markdown("### 📋 Listado Detallado de Películas Filtradas")
+        cols_mostrar = ['titulo_final', 'anio', 'recaudacion_usd', 'popularidad', 'promedio_votos', 'conteo_votos', 'cluster']
+        st.dataframe(df_filtrado[cols_mostrar].sort_values(by='recaudacion_usd', ascending=False), use_container_width=True)
 
 with tab2:
     st.subheader("Agrupamiento por Similitud (K-Means)")
-    st.markdown("Visualización de los 3 Clusters identificados según volumen de interacción y rendimiento financiero.")
-    
-    fig_scatter = px.scatter(
-        df_filtrado, 
-        x="log_votos", 
-        y="log_recaudacion", 
-        color="cluster",
-        size="popularidad",
-        hover_name="titulo_final",
-        hover_data=["anio", "recaudacion_usd"],
-        title="Clusters: Votos vs. Recaudación Mundial"
-    )
-    st.plotly_chart(fig_scatter, use_container_width=True)
+    if not df_filtrado.empty:
+        fig_scatter = px.scatter(
+            df_filtrado, 
+            x="log_votos", 
+            y="log_recaudacion", 
+            color="cluster",
+            size="popularidad",
+            hover_name="titulo_final",
+            hover_data=["anio", "recaudacion_usd"],
+            title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)"
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
 
 with tab3:
     st.subheader("Resultados de Modelos de Machine Learning")
     col_a, col_b = st.columns(2)
-    
     with col_a:
         st.markdown("#### Regresión: Predicción de Recaudación")
-        st.write("Modelo: **Random Forest Regressor** (R² = ~0.68)")
+        st.write("Modelo: **Random Forest Regressor** ($R^2 = 0.6840$)")
         st.info("Variables más determinantes: Conteo de Votos y Popularidad en TMDB.")
-
     with col_b:
         st.markdown("#### Clasificación: Detección de 'Blockbusters'")
         st.write("Modelo: **Random Forest Classifier** vs **Regresión Logística**")
-        st.success("Accuracy alcanzado: **> 85%** evaluando el percentil 75 de ingresos.")
+        st.success("Accuracy alcanzado: **87.57%** prediendo el Top 25% de recaudación.")
 
 with tab4:
     st.subheader("Conclusiones y Hallazgos Principales")
     st.markdown("""
-    * **Impacto Digital Moderno:** Las películas producidas después de 2010 muestran una fuerte correlación entre la popularidad previa en plataformas como TMDB y su recaudación final.
+    * **Impacto Digital Moderno:** Las películas producidas después de 2010 muestran una fuerte correlación entre la popularidad previa en TMDB y la recaudación.
     * **Efecto de Clusters:**
       * *Cluster 0 (Clásicos y Éxitos Moderados):* Películas con excelente votación pero menor volumen masivo de votos.
       * *Cluster 1 (Blockbusters Masivos):* Altísima recaudación y votos, dominado por franquicias recientes.
-      * *Cluster 2 (Rendimiento Medio):* Películas de nicho o con éxito comercial acotado.
+      * *Cluster 2 (Rendimiento Medio):* Películas de nicho o éxito comercial acotado.
     """)
