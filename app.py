@@ -252,7 +252,7 @@ with tab1:
             st.plotly_chart(fig_hist, use_container_width=True)
 
         with c2:
-            st.markdown("### Top Películas MÁS Taquilleras del Filtro")
+            st.markdown("### Top Películas Más Taquilleras del Filtro")
             top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
             fig_bar = px.bar(
                 top10, 
