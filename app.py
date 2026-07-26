@@ -252,7 +252,7 @@ with tab1:
             st.plotly_chart(fig_hist, use_container_width=True)
 
         with c2:
-            st.markdown("### Top Películas MÁS Taquilleras del Filtro")
+            st.markdown("### Top Películas Más Taquilleras del Filtro")
             top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
             fig_bar = px.bar(
                 top10, 
@@ -271,7 +271,7 @@ with tab1:
 
         st.markdown("### 📋 Listado Detallado de Películas (Ordenado por Recaudación)")
         # 'posicion_ranking' ubicado inmediatamente al lado de 'anio'
-        cols_mostrar = ['recaudacion_usd', 'titulo_final', 'anio', 'posicion_ranking', 'popularidad', 'promedio_votos', 'cluster']
+        cols_mostrar = [ 'titulo_final', 'anio', 'posicion_ranking', 'recaudacion_usd','popularidad', 'promedio_votos', 'cluster']
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
         
         # Ordenación estricta descendente por recaudación en USD
