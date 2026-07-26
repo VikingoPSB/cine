@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (TEMA CLARO + EFECTO DE RELIEVE Y SOMBRAS 3D)
+# ESTILO CSS PERSONALIZADO (SIDEBAR MÁS CLARO + CONTRASTE OPTIMIZADO)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -37,7 +37,47 @@ estilo_cine_css = """
     pointer-events: none;
 }
 
-/* EFECTO RELIEVE: Tarjetas de Métricas y Contenedores de Gráficos con sombra 3D */
+/* BARRA LATERAL ACLARADA: Tono azul slate medio (#334155) en lugar de azul noche oscuro */
+section[data-testid="stSidebar"] {
+    background-color: #334155 !important;
+    border-right: 2px solid #cbd5e1;
+}
+
+/* CONTRASTE OPTIMIZADO: Títulos, etiquetas y textos de la barra lateral en Blanco Puro */
+section[data-testid="stSidebar"] label, 
+section[data-testid="stSidebar"] p, 
+section[data-testid="stSidebar"] h1, 
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* Estilo y alto contraste para los inputs de texto dentro del Sidebar */
+section[data-testid="stSidebar"] input {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-radius: 6px;
+}
+
+/* Estilo y contraste del Botón "Limpiar Filtros" */
+section[data-testid="stSidebar"] button {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: bold !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+section[data-testid="stSidebar"] button:hover {
+    background-color: #0369a1 !important;
+    transform: scale(1.02);
+}
+
+/* EFECTO RELIEVE EN EL PANEL PRINCIPAL: Tarjetas y Gráficos */
 div[data-testid="stMetric"], .stPlotlyChart {
     background-color: #ffffff;
     padding: 12px;
@@ -47,25 +87,9 @@ div[data-testid="stMetric"], .stPlotlyChart {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Micro-interacción: La tarjeta se eleva al pasar el mouse */
 .stPlotlyChart:hover, div[data-testid="stMetric"]:hover {
     transform: translateY(-3px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Barra lateral en tono azul noche para contraste */
-section[data-testid="stSidebar"] {
-    background-color: #1e293b !important;
-}
-
-/* Textos dentro de la barra lateral en blanco */
-section[data-testid="stSidebar"] label, 
-section[data-testid="stSidebar"] p, 
-section[data-testid="stSidebar"] h1, 
-section[data-testid="stSidebar"] h2, 
-section[data-testid="stSidebar"] h3,
-section[data-testid="stSidebar"] span {
-    color: #f8fafc !important;
 }
 
 div[data-testid="stMetricValue"] {
@@ -73,7 +97,6 @@ div[data-testid="stMetricValue"] {
     font-weight: bold;
 }
 
-/* Títulos principales bien claros y oscuros */
 .stApp h1, .stApp h2, .stApp h3 {
     color: #0f172a !important;
     font-weight: 700;
@@ -207,7 +230,7 @@ if df_filtrado.empty:
     st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
 
 # ==============================================================================
-# DASHBOARD (PESTAÑAS CON GRÁFICOS EN RELIEVE)
+# DASHBOARD
 # ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
@@ -245,7 +268,6 @@ with tab1:
                 title="Distribución de Recaudación según Filtros",
                 template="plotly_white"
             )
-            # Delineado para dar sensación de volumen
             fig_hist.update_traces(marker_line_color='#0f172a', marker_line_width=1, opacity=0.85)
             st.plotly_chart(fig_hist, use_container_width=True)
 
@@ -263,7 +285,6 @@ with tab1:
                 labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"},
                 template="plotly_white"
             )
-            # Delineado definido en barras para simular relieve 3D
             fig_bar.update_traces(marker_line_color='#1e293b', marker_line_width=1.5, opacity=0.9)
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
