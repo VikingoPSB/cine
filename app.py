@@ -3,15 +3,49 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
+# 1. CONFIGURACIÓN DE PÁGINA
 st.set_page_config(
     page_title="Cinematic Data Mining | Top 50 Años",
     page_icon="🎬",
     layout="wide"
 )
 
-st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
-st.markdown("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Modelos Predictivos")
+# ==============================================================================
+# ESTILO CSS PERSONALIZADO (FONDO TEMÁTICO DE CINE NO INVASIVO)
+# ==============================================================================
+estilo_cine_css = """
+<style>
+/* Fondo general con patrón cinematográfico sutil y overlay oscuro */
+.stApp {
+    background-color: #0f172a;
+    background-image: 
+        linear-gradient(rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.92)),
+        url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
 
+/* Color destacado para las métricas principales */
+div[data-testid="stMetricValue"] {
+    color: #38bdf8 !important;
+}
+
+/* Efecto esmerilado en la barra lateral */
+section[data-testid="stSidebar"] {
+    background-color: rgba(30, 41, 59, 0.88) !important;
+    backdrop-filter: blur(8px);
+}
+
+/* Colores de contraste para títulos */
+h1, h2, h3 {
+    color: #f8fafc !important;
+}
+</style>
+"""
+st.markdown(estilo_cine_css, unsafe_allow_html=True)
+
+# 2. CARGA DE DATOS
 @st.cache_data
 def cargar_datos():
     df = pd.read_csv("dataset_minado.csv")
@@ -23,13 +57,16 @@ except Exception as e:
     st.error("No se pudo encontrar 'dataset_minado.csv'. Asegurate de tener el archivo en el mismo directorio.")
     st.stop()
 
+# Encabezado principal
+st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
+st.markdown("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Modelos Predictivos")
+
 # ==============================================================================
 # INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
 # ==============================================================================
 OPCIONES_DECADAS = ['1977-1985', '1986-1995', '1996-2005', '2006-2015', '2016-2026']
 OPCIONES_CLUSTERS = sorted(df['cluster'].unique())
 
-# Obtener rango de ranking disponible (generalmente 1 a 20)
 MIN_RANKING = int(df['posicion_ranking'].min()) if 'posicion_ranking' in df.columns else 1
 MAX_RANKING = int(df['posicion_ranking'].max()) if 'posicion_ranking' in df.columns else 20
 
@@ -44,7 +81,7 @@ if 'filtro_ranking' not in st.session_state:
 if 'filtro_clusters' not in st.session_state:
     st.session_state.filtro_clusters = OPCIONES_CLUSTERS.copy()
 
-# Función para reiniciar todos los filtros
+# Función de reinicio de filtros
 def reiniciar_filtros():
     st.session_state.filtro_busqueda = ""
     st.session_state.filtro_decadas = OPCIONES_DECADAS.copy()
@@ -68,21 +105,21 @@ st.sidebar.text_input(
     placeholder="Ej: Avatar, Star Wars..."
 )
 
-# 3. Botonera de Selección Múltiple de Décadas
+# 3. Botonera Múltiple de Décadas
 st.sidebar.multiselect(
     "🗓️ Selección de Décadas:",
     options=OPCIONES_DECADAS,
     key="filtro_decadas"
 )
 
-# 4. Textbox para un Año Exacto
+# 4. Textbox para Año Exacto
 st.sidebar.text_input(
     "📆 Año Específico (Opcional):",
     key="filtro_anio_exacto",
     placeholder="Ej: 1997"
 )
 
-# 5. NUEVO: Slider de Rango de Ranking en Taquilla
+# 5. Slider Rango de Ranking
 st.sidebar.slider(
     "🏆 Posición en Ranking Anual (Box Office):",
     min_value=MIN_RANKING,
@@ -91,7 +128,7 @@ st.sidebar.slider(
     help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)"
 )
 
-# 6. Filtro de Clusters K-Means
+# 6. Filtro Clusters K-Means
 st.sidebar.multiselect(
     "🎯 Cluster (K-Means):",
     options=OPCIONES_CLUSTERS,
@@ -103,7 +140,7 @@ st.sidebar.multiselect(
 # ==============================================================================
 df_filtrado = df.copy()
 
-# A) Filtrar por título
+# A) Filtrar por búsqueda de texto
 if st.session_state.filtro_busqueda.strip() != "":
     df_filtrado = df_filtrado[
         df_filtrado['titulo_final'].str.contains(st.session_state.filtro_busqueda, case=False, na=False)
@@ -123,7 +160,7 @@ if st.session_state.filtro_anio_exacto.strip() != "":
     except ValueError:
         st.sidebar.warning("⚠️ Escribí un año numérico válido (ej: 1999).")
 
-# D) NUEVO: Filtrar por Rango de Ranking
+# D) Filtrar por rango de ranking
 r_min, r_max = st.session_state.filtro_ranking
 if 'posicion_ranking' in df_filtrado.columns:
     df_filtrado = df_filtrado[
@@ -137,12 +174,12 @@ if st.session_state.filtro_clusters:
 else:
     df_filtrado = df_filtrado.iloc[0:0]
 
-# Mensaje de advertencia si no hay resultados
+# Mensaje de advertencia si no hay coincidencias
 if df_filtrado.empty:
     st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
 
 # ==============================================================================
-# DASHBOARD
+# DASHBOARD (CONTENIDO REFRESCADO EN TIEMPO REAL)
 # ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
@@ -177,7 +214,7 @@ with tab1:
                 x="log_recaudacion", 
                 color="decada", 
                 marginal="rug",
-                title="Distribución de Recaudación según Filtro"
+                title="Distribución de Recaudación según Filtros"
             )
             st.plotly_chart(fig_hist, use_container_width=True)
 
@@ -189,7 +226,7 @@ with tab1:
                 x="recaudacion_usd", 
                 y="titulo_final", 
                 orientation='h', 
-                color="posicion_ranking", # Coloreado por la posición de Ranking
+                color="posicion_ranking",
                 color_continuous_scale="Viridis_r",
                 title="Top Recaudación en USD (Color por Puesto de Ranking)", 
                 labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"}
@@ -197,7 +234,7 @@ with tab1:
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
 
-        # Tabla interactiva con el Ranking incluido explícitamente
+        # Tabla interactiva formateada
         st.markdown("### 📋 Listado Detallado de Películas (Con Ranking Anual)")
         cols_mostrar = ['posicion_ranking', 'titulo_final', 'anio', 'recaudacion_usd', 'popularidad', 'promedio_votos', 'cluster']
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
@@ -224,7 +261,7 @@ with tab2:
             size="popularidad",
             hover_name="titulo_final",
             hover_data=["anio", "posicion_ranking", "recaudacion_usd"],
-            title="Clusters: Votos vs. Recaudación Mundial"
+            title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)"
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
 
