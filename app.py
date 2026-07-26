@@ -11,30 +11,41 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (FONDO TEMÁTICO DE CINE NO INVASIVO)
+# ESTILO CSS PERSONALIZADO (FONDO LIMPIO + CINTA DE CINE EN ESQUINA)
 # ==============================================================================
 estilo_cine_css = """
 <style>
-/* Fondo general con patrón cinematográfico sutil y overlay oscuro */
+/* Fondo oscuro elegante y limpio */
 .stApp {
     background-color: #0f172a;
-    background-image: 
-        linear-gradient(rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.92)),
-        url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+    color: #f8fafc;
 }
 
-/* Color destacado para las métricas principales */
+/* Imagen decorativa de cinta de cine en la esquina superior derecha */
+.stApp::before {
+    content: "";
+    position: fixed;
+    top: 15px;
+    right: 25px;
+    width: 150px;
+    height: 150px;
+    background-image: url("https://cdn-icons-png.flaticon.com/512/3172/3172554.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.30;
+    z-index: 999;
+    pointer-events: none;
+}
+
+/* Barra lateral estilizada */
+section[data-testid="stSidebar"] {
+    background-color: #1e293b !important;
+    border-right: 1px solid #334155;
+}
+
+/* Métrica con tono azul brillante */
 div[data-testid="stMetricValue"] {
     color: #38bdf8 !important;
-}
-
-/* Efecto esmerilado en la barra lateral */
-section[data-testid="stSidebar"] {
-    background-color: rgba(30, 41, 59, 0.88) !important;
-    backdrop-filter: blur(8px);
 }
 
 /* Colores de contraste para títulos */
@@ -57,9 +68,13 @@ except Exception as e:
     st.error("No se pudo encontrar 'dataset_minado.csv'. Asegurate de tener el archivo en el mismo directorio.")
     st.stop()
 
-# Encabezado principal
-st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
-st.markdown("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Modelos Predictivos")
+# ENCABEZADO PRINCIPAL CON LOGO Y TÍTULO
+col_head1, col_head2 = st.columns([0.88, 0.12])
+with col_head1:
+    st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
+    st.markdown("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Modelos Predictivos")
+with col_head2:
+    st.image("https://cdn-icons-png.flaticon.com/512/3172/3172554.png", width=90)
 
 # ==============================================================================
 # INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
@@ -98,7 +113,7 @@ st.sidebar.header("🔍 Filtros Interactivos")
 st.sidebar.button("🧹 Limpiar todos los filtros", on_click=reiniciar_filtros, use_container_width=True)
 st.sidebar.markdown("---")
 
-# 2. Textbox para buscar película(s)
+# 2. Textbox para buscar película(s) por título
 st.sidebar.text_input(
     "🔎 Buscar por Título:",
     key="filtro_busqueda",
@@ -119,7 +134,7 @@ st.sidebar.text_input(
     placeholder="Ej: 1997"
 )
 
-# 5. Slider Rango de Ranking
+# 5. Slider de Ranking de Taquilla (Box Office Mojo)
 st.sidebar.slider(
     "🏆 Posición en Ranking Anual (Box Office):",
     min_value=MIN_RANKING,
@@ -179,7 +194,7 @@ if df_filtrado.empty:
     st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
 
 # ==============================================================================
-# DASHBOARD (CONTENIDO REFRESCADO EN TIEMPO REAL)
+# DASHBOARD (PESTAÑAS REFRESCADAS)
 # ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
@@ -214,7 +229,8 @@ with tab1:
                 x="log_recaudacion", 
                 color="decada", 
                 marginal="rug",
-                title="Distribución de Recaudación según Filtros"
+                title="Distribución de Recaudación según Filtros",
+                template="plotly_dark"
             )
             st.plotly_chart(fig_hist, use_container_width=True)
 
@@ -229,7 +245,8 @@ with tab1:
                 color="posicion_ranking",
                 color_continuous_scale="Viridis_r",
                 title="Top Recaudación en USD (Color por Puesto de Ranking)", 
-                labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"}
+                labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"},
+                template="plotly_dark"
             )
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
@@ -261,7 +278,8 @@ with tab2:
             size="popularidad",
             hover_name="titulo_final",
             hover_data=["anio", "posicion_ranking", "recaudacion_usd"],
-            title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)"
+            title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)",
+            template="plotly_dark"
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
 
