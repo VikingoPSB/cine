@@ -11,11 +11,11 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (TEMA GRIS CLARO SUAVE + TÍTULOS OSCUROS LEGIBLES)
+# ESTILO CSS PERSONALIZADO (TEMA CLARO + EFECTO DE RELIEVE Y SOMBRAS 3D)
 # ==============================================================================
 estilo_cine_css = """
 <style>
-/* Fondo general gris claro suave (descansa la vista y resalta los gráficos) */
+/* Fondo general gris claro suave */
 .stApp {
     background-color: #f1f5f9;
     color: #0f172a;
@@ -37,12 +37,28 @@ estilo_cine_css = """
     pointer-events: none;
 }
 
-/* Barra lateral en tono azul noche para contraste visual */
+/* EFECTO RELIEVE: Tarjetas de Métricas y Contenedores de Gráficos con sombra 3D */
+div[data-testid="stMetric"], .stPlotlyChart {
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #cbd5e1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Micro-interacción: La tarjeta se eleva al pasar el mouse */
+.stPlotlyChart:hover, div[data-testid="stMetric"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Barra lateral en tono azul noche para contraste */
 section[data-testid="stSidebar"] {
     background-color: #1e293b !important;
 }
 
-/* Textos y etiquetas dentro de la barra lateral en blanco */
+/* Textos dentro de la barra lateral en blanco */
 section[data-testid="stSidebar"] label, 
 section[data-testid="stSidebar"] p, 
 section[data-testid="stSidebar"] h1, 
@@ -52,21 +68,12 @@ section[data-testid="stSidebar"] span {
     color: #f8fafc !important;
 }
 
-/* Tarjetas de Métricas con fondo blanco y sombra elegante */
-div[data-testid="stMetric"] {
-    background-color: #ffffff;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border: 1px solid #cbd5e1;
-}
-
 div[data-testid="stMetricValue"] {
     color: #0284c7 !important;
     font-weight: bold;
 }
 
-/* Títulos del panel central en Azul Oscuro / Slate para máxima legibilidad */
+/* Títulos principales bien claros y oscuros */
 .stApp h1, .stApp h2, .stApp h3 {
     color: #0f172a !important;
     font-weight: 700;
@@ -200,7 +207,7 @@ if df_filtrado.empty:
     st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
 
 # ==============================================================================
-# DASHBOARD (PESTAÑAS CON TÍTULOS Y GRÁFICOS DESTACADOS)
+# DASHBOARD (PESTAÑAS CON GRÁFICOS EN RELIEVE)
 # ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
@@ -238,6 +245,8 @@ with tab1:
                 title="Distribución de Recaudación según Filtros",
                 template="plotly_white"
             )
+            # Delineado para dar sensación de volumen
+            fig_hist.update_traces(marker_line_color='#0f172a', marker_line_width=1, opacity=0.85)
             st.plotly_chart(fig_hist, use_container_width=True)
 
         with c2:
@@ -254,6 +263,8 @@ with tab1:
                 labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"},
                 template="plotly_white"
             )
+            # Delineado definido en barras para simular relieve 3D
+            fig_bar.update_traces(marker_line_color='#1e293b', marker_line_width=1.5, opacity=0.9)
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -286,6 +297,7 @@ with tab2:
             title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)",
             template="plotly_white"
         )
+        fig_scatter.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
         st.plotly_chart(fig_scatter, use_container_width=True)
 
 with tab3:
