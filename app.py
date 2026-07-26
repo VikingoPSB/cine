@@ -26,9 +26,12 @@ except Exception as e:
 # ==============================================================================
 # INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
 # ==============================================================================
-# Definimos los valores por defecto
 OPCIONES_DECADAS = ['1977-1985', '1986-1995', '1996-2005', '2006-2015', '2016-2026']
 OPCIONES_CLUSTERS = sorted(df['cluster'].unique())
+
+# Obtener rango de ranking disponible (generalmente 1 a 20)
+MIN_RANKING = int(df['posicion_ranking'].min()) if 'posicion_ranking' in df.columns else 1
+MAX_RANKING = int(df['posicion_ranking'].max()) if 'posicion_ranking' in df.columns else 20
 
 if 'filtro_busqueda' not in st.session_state:
     st.session_state.filtro_busqueda = ""
@@ -36,14 +39,17 @@ if 'filtro_decadas' not in st.session_state:
     st.session_state.filtro_decadas = OPCIONES_DECADAS.copy()
 if 'filtro_anio_exacto' not in st.session_state:
     st.session_state.filtro_anio_exacto = ""
+if 'filtro_ranking' not in st.session_state:
+    st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
 if 'filtro_clusters' not in st.session_state:
     st.session_state.filtro_clusters = OPCIONES_CLUSTERS.copy()
 
-# Función para reiniciar los filtros al presionar el botón "Limpiar todo"
+# Función para reiniciar todos los filtros
 def reiniciar_filtros():
     st.session_state.filtro_busqueda = ""
     st.session_state.filtro_decadas = OPCIONES_DECADAS.copy()
     st.session_state.filtro_anio_exacto = ""
+    st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
     st.session_state.filtro_clusters = OPCIONES_CLUSTERS.copy()
 
 # ==============================================================================
@@ -76,7 +82,16 @@ st.sidebar.text_input(
     placeholder="Ej: 1997"
 )
 
-# 5. Filtro de Clusters K-Means
+# 5. NUEVO: Slider de Rango de Ranking en Taquilla
+st.sidebar.slider(
+    "🏆 Posición en Ranking Anual (Box Office):",
+    min_value=MIN_RANKING,
+    max_value=MAX_RANKING,
+    key="filtro_ranking",
+    help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)"
+)
+
+# 6. Filtro de Clusters K-Means
 st.sidebar.multiselect(
     "🎯 Cluster (K-Means):",
     options=OPCIONES_CLUSTERS,
@@ -88,20 +103,19 @@ st.sidebar.multiselect(
 # ==============================================================================
 df_filtrado = df.copy()
 
-# Filtrar por texto en el título (insensible a mayúsculas/minúsculas)
+# A) Filtrar por título
 if st.session_state.filtro_busqueda.strip() != "":
     df_filtrado = df_filtrado[
         df_filtrado['titulo_final'].str.contains(st.session_state.filtro_busqueda, case=False, na=False)
     ]
 
-# Filtrar por décadas elegidas
+# B) Filtrar por décadas
 if st.session_state.filtro_decadas:
     df_filtrado = df_filtrado[df_filtrado['decada'].isin(st.session_state.filtro_decadas)]
 else:
-    # Si desmarca todas las décadas, muestra dataset vacío
     df_filtrado = df_filtrado.iloc[0:0]
 
-# Filtrar por año exacto si el usuario escribió un número válido
+# C) Filtrar por año exacto
 if st.session_state.filtro_anio_exacto.strip() != "":
     try:
         anio_int = int(st.session_state.filtro_anio_exacto.strip())
@@ -109,18 +123,26 @@ if st.session_state.filtro_anio_exacto.strip() != "":
     except ValueError:
         st.sidebar.warning("⚠️ Escribí un año numérico válido (ej: 1999).")
 
-# Filtrar por clusters
+# D) NUEVO: Filtrar por Rango de Ranking
+r_min, r_max = st.session_state.filtro_ranking
+if 'posicion_ranking' in df_filtrado.columns:
+    df_filtrado = df_filtrado[
+        (df_filtrado['posicion_ranking'] >= r_min) & 
+        (df_filtrado['posicion_ranking'] <= r_max)
+    ]
+
+# E) Filtrar por clusters
 if st.session_state.filtro_clusters:
     df_filtrado = df_filtrado[df_filtrado['cluster'].isin(st.session_state.filtro_clusters)]
 else:
     df_filtrado = df_filtrado.iloc[0:0]
 
-# Mensaje de advertencia si no hay resultados con los filtros aplicados
+# Mensaje de advertencia si no hay resultados
 if df_filtrado.empty:
     st.warning("⚠️ No se encontraron películas que coincidan con la combinación de filtros seleccionada.")
 
 # ==============================================================================
-# DASHBOARD (PESTAÑAS CON CONTENIDO REFRESCADO)
+# DASHBOARD
 # ==============================================================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Visión General y EDA", 
@@ -167,17 +189,29 @@ with tab1:
                 x="recaudacion_usd", 
                 y="titulo_final", 
                 orientation='h', 
-                color="recaudacion_usd",
-                title="Top Recaudación en USD", 
-                labels={"recaudacion_usd": "USD", "titulo_final": "Película"}
+                color="posicion_ranking", # Coloreado por la posición de Ranking
+                color_continuous_scale="Viridis_r",
+                title="Top Recaudación en USD (Color por Puesto de Ranking)", 
+                labels={"recaudacion_usd": "USD", "titulo_final": "Película", "posicion_ranking": "Puesto Ranking"}
             )
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
 
-        # Tabla interactiva con el listado filtrado
-        st.markdown("### 📋 Listado Detallado de Películas Filtradas")
-        cols_mostrar = ['titulo_final', 'anio', 'recaudacion_usd', 'popularidad', 'promedio_votos', 'conteo_votos', 'cluster']
-        st.dataframe(df_filtrado[cols_mostrar].sort_values(by='recaudacion_usd', ascending=False), use_container_width=True)
+        # Tabla interactiva con el Ranking incluido explícitamente
+        st.markdown("### 📋 Listado Detallado de Películas (Con Ranking Anual)")
+        cols_mostrar = ['posicion_ranking', 'titulo_final', 'anio', 'recaudacion_usd', 'popularidad', 'promedio_votos', 'cluster']
+        cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
+        
+        st.dataframe(
+            df_filtrado[cols_existentes].sort_values(by=['anio', 'posicion_ranking'], ascending=[False, True]),
+            use_container_width=True,
+            column_config={
+                "posicion_ranking": st.column_config.NumberColumn("🏆 Ranking", format="#%d"),
+                "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d"),
+                "titulo_final": "Película",
+                "anio": "Año"
+            }
+        )
 
 with tab2:
     st.subheader("Agrupamiento por Similitud (K-Means)")
@@ -189,8 +223,8 @@ with tab2:
             color="cluster",
             size="popularidad",
             hover_name="titulo_final",
-            hover_data=["anio", "recaudacion_usd"],
-            title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)"
+            hover_data=["anio", "posicion_ranking", "recaudacion_usd"],
+            title="Clusters: Votos vs. Recaudación Mundial"
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
 
@@ -204,7 +238,7 @@ with tab3:
     with col_b:
         st.markdown("#### Clasificación: Detección de 'Blockbusters'")
         st.write("Modelo: **Random Forest Classifier** vs **Regresión Logística**")
-        st.success("Accuracy alcanzado: **87.57%** prediendo el Top 25% de recaudación.")
+        st.success("Accuracy alcanzado: **87.57%** evaluando el Top 25% de recaudación.")
 
 with tab4:
     st.subheader("Conclusiones y Hallazgos Principales")
