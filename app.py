@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (SIN MARCA DE AGUA / ÍCONOS DE FONDO)
+# ESTILO CSS PERSONALIZADO
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -101,7 +101,7 @@ except Exception as e:
     st.error("No se pudo encontrar 'dataset_minado.csv'. Asegurate de tener el archivo en el mismo directorio.")
     st.stop()
 
-# ENCABEZADO PRINCIPAL (SIN ÍCONO)
+# ENCABEZADO PRINCIPAL
 st.title("🎬 Análisis de Taquilla Cine Mundial (Últimos 50 Años)")
 st.markdown("**Proceso KDD integrado:** Scraping + API REST + Clustering K-Means + Modelos Predictivos")
 
@@ -252,7 +252,7 @@ with tab1:
             st.plotly_chart(fig_hist, use_container_width=True)
 
         with c2:
-            st.markdown("### Top Películas Más Taquilleras del Filtro")
+            st.markdown("### Top Películas MÁS Taquilleras del Filtro")
             top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
             fig_bar = px.bar(
                 top10, 
@@ -269,18 +269,23 @@ with tab1:
             fig_bar.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig_bar, use_container_width=True)
 
-        st.markdown("### 📋 Listado Detallado de Películas (Con Ranking Anual)")
-        cols_mostrar = ['posicion_ranking', 'titulo_final', 'anio', 'recaudacion_usd', 'popularidad', 'promedio_votos', 'cluster']
+        st.markdown("### 📋 Listado Detallado de Películas (Ordenado por Recaudación)")
+        cols_mostrar = ['recaudacion_usd', 'titulo_final', 'anio', 'popularidad', 'promedio_votos', 'cluster']
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
         
+        # Ordenación estricta descendente por mayor recaudación
+        df_tabla_ordenada = df_filtrado[cols_existentes].sort_values(by='recaudacion_usd', ascending=False)
+        
         st.dataframe(
-            df_filtrado[cols_existentes].sort_values(by=['anio', 'posicion_ranking'], ascending=[False, True]),
+            df_tabla_ordenada,
             use_container_width=True,
             column_config={
-                "posicion_ranking": st.column_config.NumberColumn("🏆 Ranking", format="#%d"),
                 "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d"),
                 "titulo_final": "Película",
-                "anio": "Año"
+                "anio": "Año",
+                "popularidad": "Popularidad TMDB",
+                "promedio_votos": "Promedio Votos",
+                "cluster": "Cluster"
             }
         )
 
