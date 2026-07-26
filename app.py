@@ -89,10 +89,22 @@ div[data-testid="stMetricValue"] {
 """
 st.markdown(estilo_cine_css, unsafe_allow_html=True)
 
-# 2. CARGA DE DATOS
+# 2. CARGA Y PREPROCESAMIENTO DE DATOS
 @st.cache_data
 def cargar_datos():
     df = pd.read_csv("dataset_minado.csv")
+    
+    # Asegurar la existencia de las columnas de presupuesto y ROI
+    if 'presupuesto_usd' not in df.columns:
+        df['presupuesto_usd'] = 0.0
+    if 'log_presupuesto' not in df.columns:
+        df['log_presupuesto'] = np.log1p(df['presupuesto_usd'])
+    if 'roi' not in df.columns:
+        df['roi'] = np.where(
+            df['presupuesto_usd'] > 0, 
+            (df['recaudacion_usd'] - df['presupuesto_usd']) / df['presupuesto_usd'], 
+            0.0
+        )
     return df
 
 try:
@@ -222,16 +234,20 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.subheader("Métricas Generales del Conjunto Filtrado")
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     total_pelis = len(df_filtrado)
+    
+    pres_prom = f"${df_filtrado['presupuesto_usd'].mean():,.0f} USD" if total_pelis > 0 else "$0 USD"
     rec_prom = f"${df_filtrado['recaudacion_usd'].mean():,.0f} USD" if total_pelis > 0 else "$0 USD"
+    roi_prom = f"{df_filtrado['roi'].mean():.2f}x" if total_pelis > 0 else "0x"
     pop_prom = f"{df_filtrado['popularidad'].mean():.1f}" if total_pelis > 0 else "0"
     voto_prom = f"{df_filtrado['promedio_votos'].mean():.1f} / 10" if total_pelis > 0 else "0"
 
-    col1.metric("Películas Encontradas", total_pelis)
-    col2.metric("Recaudación Promedio", rec_prom)
-    col3.metric("Popularidad TMDB", pop_prom)
-    col4.metric("Promedio Votos", voto_prom)
+    col1.metric("Películas", total_pelis)
+    col2.metric("Presupuesto Prom.", pres_prom)
+    col3.metric("Recaudación Prom.", rec_prom)
+    col4.metric("ROI Promedio", roi_prom)
+    col5.metric("Prom. Votos", voto_prom)
 
     st.markdown("---")
     
@@ -270,11 +286,9 @@ with tab1:
             st.plotly_chart(fig_bar, use_container_width=True)
 
         st.markdown("### 📋 Listado Detallado de Películas (Ordenado por Recaudación)")
-        # 'posicion_ranking' ubicado inmediatamente al lado de 'anio'
-        cols_mostrar = [ 'titulo_final', 'anio', 'posicion_ranking', 'recaudacion_usd','popularidad', 'promedio_votos', 'cluster']
+        cols_mostrar = ['titulo_final', 'anio', 'posicion_ranking', 'presupuesto_usd', 'recaudacion_usd', 'roi', 'popularidad', 'promedio_votos', 'cluster']
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
         
-        # Ordenación estricta descendente por recaudación en USD
         df_tabla_ordenada = df_filtrado[cols_existentes].sort_values(by='recaudacion_usd', ascending=False)
         
         st.dataframe(
@@ -284,7 +298,9 @@ with tab1:
                 "titulo_final": "Película",
                 "anio": "Año",
                 "posicion_ranking": st.column_config.NumberColumn("🏆 Puesto Ranking", format="#%d"),
+                "presupuesto_usd": st.column_config.NumberColumn("💸 Presupuesto USD", format="$%d"),
                 "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d"),
+                "roi": st.column_config.NumberColumn("📈 ROI", format="%.2fx"),
                 "popularidad": "Popularidad TMDB",
                 "promedio_votos": "Promedio Votos",
                 "cluster": "Cluster"
@@ -294,15 +310,25 @@ with tab1:
 with tab2:
     st.subheader("Agrupamiento por Similitud (K-Means)")
     if not df_filtrado.empty:
+        # Selector de eje X para analizar los clusters con el presupuesto
+        eje_x_opcion = st.radio(
+            "Seleccionar eje X para visualizar los clusters:",
+            options=["Conteo de Votos (log_votos)", "Presupuesto en USD (log_presupuesto)"],
+            horizontal=True
+        )
+        
+        eje_x = "log_votos" if "Votos" in eje_x_opcion else "log_presupuesto"
+        titulo_eje_x = "Log(Conteo de Votos)" if eje_x == "log_votos" else "Log(Presupuesto USD)"
+
         fig_scatter = px.scatter(
             df_filtrado, 
-            x="log_votos", 
+            x=eje_x, 
             y="log_recaudacion", 
             color="cluster",
             size="popularidad",
             hover_name="titulo_final",
-            hover_data=["anio", "posicion_ranking", "recaudacion_usd"],
-            title="Clusters: Votos vs. Recaudación Mundial (Datos Filtrados)",
+            hover_data=["anio", "posicion_ranking", "presupuesto_usd", "recaudacion_usd", "roi"],
+            title=f"Clusters: {titulo_eje_x} vs. Log(Recaudación USD)",
             template="plotly_white"
         )
         fig_scatter.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
@@ -314,7 +340,7 @@ with tab3:
     with col_a:
         st.markdown("#### Regresión: Predicción de Recaudación")
         st.write("Modelo: **Random Forest Regressor** ($R^2 = 0.6840$)")
-        st.info("Variables más determinantes: Conteo de Votos y Popularidad en TMDB.")
+        st.info("Variables más determinantes: Presupuesto en USD, Conteo de Votos y Popularidad en TMDB.")
     with col_b:
         st.markdown("#### Clasificación: Detección de 'Blockbusters'")
         st.write("Modelo: **Random Forest Classifier** vs **Regresión Logística**")
@@ -323,9 +349,9 @@ with tab3:
 with tab4:
     st.subheader("Conclusiones y Hallazgos Principales")
     st.markdown("""
-    * **Impacto Digital Moderno:** Las películas producidas después de 2010 muestran una fuerte correlación entre la popularidad previa en TMDB y la recaudación.
+    * **Impacto Digital Moderno y Financiero:** Se observa una correlación directa entre el presupuesto asignado y la recaudación obtenida, potenciada por la popularidad en TMDB en la era digital (2010+).
     * **Efecto de Clusters:**
-      * *Cluster 0 (Clásicos y Éxitos Moderados):* Películas con excelente votación pero menor volumen masivo de votos.
-      * *Cluster 1 (Blockbusters Masivos):* Altísima recaudación y votos, dominado por franquicias recientes.
-      * *Cluster 2 (Rendimiento Medio):* Películas de nicho o éxito comercial acotado.
+      * *Cluster 0 (Clásicos y Éxitos Moderados):* Películas con presupuestos acotados, excelente votación y retorno comercial sostenido.
+      * *Cluster 1 (Blockbusters Masivos):* Producciones de presupuesto elevado y recaudación masiva, dominado por franquicias y sagas globales.
+      * *Cluster 2 (Rendimiento Medio):* Producciones con niveles intermedios de inversión e impacto de taquilla acotado.
     """)
