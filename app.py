@@ -17,7 +17,7 @@ estilo_cine_css = """
 <style>
 /* Fondo oscuro elegante y limpio */
 .stApp {
-    background-color: #0f172a;
+    background-color: #f1f5f9;
     color: #f8fafc;
 }
 
