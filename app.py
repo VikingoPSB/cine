@@ -62,27 +62,42 @@ section[data-testid="stSidebar"] button:hover {
 }
 
 /* TARJETAS Y GRÁFICOS CON EFECTO DE RELIEVE */
+
 div[data-testid="stMetric"], .stPlotlyChart {
+
     background-color: #ffffff;
+
     padding: 12px;
+
     border-radius: 12px;
+
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
     border: 1px solid #cbd5e1;
+
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-/* Permite que la tarjeta ajuste su altura al contenido */
-    height: auto !important;
-    min-height: fit-content;
     
+
     /* Autoajuste general para el contenedor */
+
     word-break: break-word;
+
     overflow-wrap: break-word;
+
 }
 
+
+
 .stPlotlyChart:hover, div[data-testid="stMetric"]:hover {
+
     transform: translateY(-3px);
+
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
+
+} 
+
+
 
 /* Valor de la métrica (número o texto principal) */
 div[data-testid="stMetricValue"] {
