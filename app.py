@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO
+# ESTILO CSS PERSONALIZADO (CORREGIDO PARA CHECKBOXES)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -27,7 +27,7 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #cbd5e1;
 }
 
-/* Encabezados, etiquetas y textos en Sidebar */
+/* Encabezados, etiquetas y textos generales en Sidebar */
 section[data-testid="stSidebar"] h1, 
 section[data-testid="stSidebar"] h2, 
 section[data-testid="stSidebar"] h3,
@@ -51,6 +51,22 @@ section[data-testid="stSidebar"] div[data-testid="stExpander"] {
     border: 1px solid #475569 !important;
     border-radius: 8px !important;
     margin-bottom: 12px;
+}
+
+/* ESTILOS ESPECÍFICOS PARA CHECKBOXES Y SUS ETIQUETAS */
+section[data-testid="stSidebar"] div[data-testid="stCheckbox"] {
+    background-color: transparent !important;
+    padding: 2px 4px !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stCheckbox"] label {
+    background-color: transparent !important;
+    color: #f8fafc !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stCheckbox"] label span {
+    background-color: transparent !important;
+    color: #f8fafc !important;
 }
 
 /* Botón Limpiar Filtros */
