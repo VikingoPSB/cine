@@ -205,7 +205,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.subheader("Métricas Generales del Conjunto Filtrado")
 
-    # CSS exclusivo para el diseño de las Tarjetas de Métricas Generales
+    # CSS con tamaño de fuente reducido para las tarjetas de métricas
     st.markdown("""
         <style>
         /* Estilo base para las tarjetas de métricas */
@@ -213,28 +213,30 @@ with tab1:
             background-color: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 16px;
+            padding: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             transition: all 0.2s ease-in-out;
         }
         
         /* Efecto hover interactivo */
         div[data-testid="stMetric"]:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px -3px rgba(0, 0, 0, 0.08);
             border-color: #0284c7;
         }
 
-        /* Color y peso del valor de la métrica */
+        /* Tamaño y color del valor numérico/resultado (reducido a 1.2rem) */
         div[data-testid="stMetricValue"] > div {
             color: #0284c7 !important;
-            font-weight: 700;
+            font-size: 1.2rem !important;
+            font-weight: 700 !important;
         }
 
-        /* Color de la etiqueta del título de la métrica */
+        /* Tamaño y color de la etiqueta/título (reducido a 0.8rem) */
         div[data-testid="stMetricLabel"] > div {
             color: #64748b !important;
-            font-weight: 600;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -418,7 +420,7 @@ with tab4:
             * **Impacto Digital Moderno y Financiero:** Se observa una correlación directa entre el presupuesto asignado y la recaudación obtenida, potenciada por la popularidad en TMDB en la era digital (2010+).
             
             * **Efecto de Clusters:**
-                * **Cluster 0 (Clásicos y Éxitos Moderados):** Películas con presupuestos acotados, excelente votación y retorno comercial sostenido.
+                * **Cluster 0 (Clásicos y Éxitos Moderados):** Películas con presupuestos acotados, excelente votación y retorno comercial sustained.
                 * **Cluster 1 (Blockbusters Masivos):** Producciones de presupuesto elevado y recaudación masiva, dominado por franquicias y sagas globales.
                 * **Cluster 2 (Rendimiento Medio):** Producciones con niveles intermedios de inversión e impacto de taquilla acotado.
             """
