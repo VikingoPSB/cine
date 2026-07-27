@@ -205,6 +205,40 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.subheader("Métricas Generales del Conjunto Filtrado")
 
+    # CSS exclusivo para el diseño de las Tarjetas de Métricas Generales
+    st.markdown("""
+        <style>
+        /* Estilo base para las tarjetas de métricas */
+        div[data-testid="stMetric"] {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        /* Efecto hover interactivo */
+        div[data-testid="stMetric"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: #0284c7;
+        }
+
+        /* Color y peso del valor de la métrica */
+        div[data-testid="stMetricValue"] > div {
+            color: #0284c7 !important;
+            font-weight: 700;
+        }
+
+        /* Color de la etiqueta del título de la métrica */
+        div[data-testid="stMetricLabel"] > div {
+            color: #64748b !important;
+            font-weight: 600;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3, col4, col5 = st.columns(5)
     total_pelis = len(df_filtrado)
 
@@ -213,25 +247,11 @@ with tab1:
     roi_prom = f"{df_filtrado['roi'].mean():.2f}x" if total_pelis > 0 else "0x"
     voto_prom = f"{df_filtrado['promedio_votos'].mean():.1f} / 10" if total_pelis > 0 else "0"
 
-    with col1:
-        with st.container(border=True):
-            st.metric("Películas", total_pelis)
-
-    with col2:
-        with st.container(border=True):
-            st.metric("Presupuesto Prom.", pres_prom)
-
-    with col3:
-        with st.container(border=True):
-            st.metric("Recaudación Prom.", rec_prom)
-
-    with col4:
-        with st.container(border=True):
-            st.metric("ROI Promedio", roi_prom)
-
-    with col5:
-        with st.container(border=True):
-            st.metric("Prom. Votos", voto_prom)
+    col1.metric("Películas", total_pelis)
+    col2.metric("Presupuesto Prom.", pres_prom)
+    col3.metric("Recaudación Prom.", rec_prom)
+    col4.metric("ROI Promedio", roi_prom)
+    col5.metric("Prom. Votos", voto_prom)
 
     st.markdown("---")
 
