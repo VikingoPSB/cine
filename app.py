@@ -40,7 +40,7 @@ section[data-testid="stSidebar"] p {
 /* INPUTS DE TEXTO EN SIDEBAR */
 section[data-testid="stSidebar"] input[type="text"] {
     background-color: #0f172a !important;
-    color: #ffffff !important;
+    color: #bab0af !important;
     border-radius: 8px !important;
     border: 1px solid #475569 !important;
 }
