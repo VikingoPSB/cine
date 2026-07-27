@@ -36,13 +36,26 @@ section[data-testid="stSidebar"] .stMarkdown {
     color: #f8fafc !important;
 }
 
-/* INPUTS DE TEXTO Y DESPLEGABLES EN SIDEBAR (Solución a contraste de texto) */
+/* INPUTS DE TEXTO Y DESPLEGABLES EN SIDEBAR */
 section[data-testid="stSidebar"] input, 
 section[data-testid="stSidebar"] div[role="combobox"] {
     background-color: #0f172a !important;
     color: #ffffff !important;
     border-radius: 8px !important;
     border: 1px solid #475569 !important;
+}
+
+/* BOTONES DE SELECCIÓN (Pills / Clusters) EN SIDEBAR */
+section[data-testid="stSidebar"] [data-testid="stPillsItem"] button {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #475569 !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stPillsItem"] button[aria-selected="true"] {
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #38bdf8 !important;
 }
 
 /* Botón Limpiar Filtros */
@@ -194,8 +207,12 @@ st.sidebar.slider(
     help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)",
 )
 
-st.sidebar.multiselect(
-    "🎯 Cluster (K-Means):", options=OPCIONES_CLUSTERS, key="filtro_clusters"
+# Selección de clusters mediante Botones (Pills)
+st.sidebar.pills(
+    "🎯 Cluster (K-Means):",
+    options=OPCIONES_CLUSTERS,
+    selection_mode="multi",
+    key="filtro_clusters"
 )
 
 # ==============================================================================
@@ -422,7 +439,7 @@ with tab3:
 
 with tab4:
     st.subheader("Conclusiones y Hallazgos Principales")
-    
+
     with st.container(border=True):
         st.markdown(
             """
