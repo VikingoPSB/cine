@@ -54,6 +54,8 @@ if "filtro_anio_exacto" not in st.session_state:
     st.session_state.filtro_anio_exacto = ""
 if "filtro_ranking" not in st.session_state:
     st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
+if "filtro_blockbuster" not in st.session_state:
+    st.session_state.filtro_blockbuster = False
 
 # Estado inicial para 'Seleccionar Todos'
 if "chk_todas_decadas" not in st.session_state:
@@ -88,6 +90,7 @@ def reiniciar_filtros():
     st.session_state.filtro_busqueda = ""
     st.session_state.filtro_anio_exacto = ""
     st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
+    st.session_state.filtro_blockbuster = False
     
     st.session_state.chk_todas_decadas = True
     toggle_todas_decadas()
@@ -113,7 +116,16 @@ st.sidebar.text_input(
     placeholder="Ej: Avatar, Star Wars...",
 )
 
-# CHECKBOXES DE DÉCADAS CON "SELECCIONAR TODOS"
+# ------------------------------------------------------------------------------
+# FILTRO DE BLOCKBUSTER EN EL SIDEBAR
+# ------------------------------------------------------------------------------
+st.sidebar.checkbox(
+    "🚀 Mostrar solo Blockbusters",
+    key="filtro_blockbuster",
+    help="Muestra únicamente las películas clasificadas como Blockbuster (Top 25% de recaudación)",
+)
+
+# CHECKBOXES DE DÉCADAS CON "SELECCIONAR TODOS" EN SIDEBAR
 decadas_seleccionadas = []
 with st.sidebar.expander("🗓️ Selección de Décadas", expanded=True):
     st.checkbox(
@@ -140,7 +152,7 @@ st.sidebar.slider(
     help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)",
 )
 
-# CHECKBOXES DE CLUSTERS CON "SELECCIONAR TODOS"
+# CHECKBOXES DE CLUSTERS CON "SELECCIONAR TODOS" EN SIDEBAR
 clusters_seleccionados = []
 with st.sidebar.expander("🎯 Cluster (K-Means)", expanded=True):
     st.checkbox(
@@ -164,6 +176,10 @@ if st.session_state.filtro_busqueda.strip() != "":
             st.session_state.filtro_busqueda, case=False, na=False
         )
     ]
+
+# APLICACIÓN DEL FILTRO SIDEBAR BLOCKBUSTER
+if st.session_state.filtro_blockbuster and "es_blockbuster" in df_filtrado.columns:
+    df_filtrado = df_filtrado[df_filtrado["es_blockbuster"] == 1]
 
 if decadas_seleccionadas:
     df_filtrado = df_filtrado[df_filtrado["decada"].isin(decadas_seleccionadas)]
@@ -205,10 +221,8 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.subheader("Métricas Generales del Conjunto Filtrado")
 
-    # CSS con tamaño de fuente reducido para las tarjetas de métricas
     st.markdown("""
         <style>
-        /* Estilo base para las tarjetas de métricas */
         div[data-testid="stMetric"] {
             background-color: #ffffff;
             border: 1px solid #e2e8f0;
@@ -218,21 +232,18 @@ with tab1:
             transition: all 0.2s ease-in-out;
         }
         
-        /* Efecto hover interactivo */
         div[data-testid="stMetric"]:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 12px -3px rgba(0, 0, 0, 0.08);
             border-color: #0284c7;
         }
 
-        /* Tamaño y color del valor numérico/resultado (reducido a 1.2rem) */
         div[data-testid="stMetricValue"] > div {
             color: #0284c7 !important;
             font-size: 1.2rem !important;
             font-weight: 700 !important;
         }
 
-        /* Tamaño y color de la etiqueta/título (reducido a 0.8rem) */
         div[data-testid="stMetricLabel"] > div {
             color: #64748b !important;
             font-size: 0.8rem !important;
@@ -296,8 +307,6 @@ with tab1:
             st.plotly_chart(fig_bar, use_container_width=True)
 
         st.markdown("### 📋 Listado Detallado de Películas")
-        
-        # AGREGADA LA COLUMNA es_blockbuster A LA LISTA
         cols_mostrar = [
             "titulo_final",
             "anio",
@@ -326,7 +335,6 @@ with tab1:
                 "roi": st.column_config.NumberColumn("📈 ROI", format="%.2fx", width="small"),
                 "popularidad": st.column_config.NumberColumn("Popularidad TMDB", format="%.1f", width="small"),
                 "promedio_votos": st.column_config.NumberColumn("Promedio Votos", format="%.1f", width="small"),
-                # CONFIGURACIÓN PARA MOSTRAR es_blockbuster COMO CHECKBOX/BOOLEANO
                 "es_blockbuster": st.column_config.CheckboxColumn("🚀 ¿Blockbuster?", width="small"),
                 "cluster": st.column_config.TextColumn("Cluster", width="small"),
             },
