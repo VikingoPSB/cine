@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (BOTONES DESACTIVADOS EN ROJO)
+# ESTILO CSS PERSONALIZADO (FUERZA BRUTA PARA ST.PILLS)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -45,50 +45,51 @@ section[data-testid="stSidebar"] div[role="combobox"] {
     border: 1px solid #475569 !important;
 }
 
-/* BOTONES DE SELECCIÓN DE CLUSTERS (Pills / BaseWeb Tags) */
+/* ========================================================================== */
+/* BOTONES DE CLUSTER (ST.PILLS): INACTIVOS EN ROJO / ACTIVOS EN AZUL         */
+/* ========================================================================== */
 
-/* 1. Estado Desactivado / Inactivo (ROJO) */
-section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"] {
-    background-color: #991b1b !important; /* Rojo oscuro */
-    border: 1px solid #f87171 !important;  /* Borde rojo claro */
+/* 1. ESTADO INACTIVO / DESACTIVADO (ROJO) */
+section[data-testid="stSidebar"] div[data-testid="stPills"] button,
+section[data-testid="stSidebar"] div[data-testid="stPills"] [role="checkbox"],
+section[data-testid="stSidebar"] div[data-testid="stPills"] [data-baseweb="tag"] {
+    background-color: #991b1b !important; /* Rojo */
+    border: 1px solid #f87171 !important;
+    color: #ffffff !important;
     transition: all 0.2s ease-in-out !important;
 }
 
-section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"] span {
-    color: #fef2f2 !important; /* Texto blanco rojizo */
-    font-weight: 500 !important;
-}
-
-/* Hover en estado desactivado (Rojo un poco más brillante) */
-section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"]:hover {
-    background-color: #b91c1c !important;
-    border-color: #fca5a5 !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"]:hover span {
+section[data-testid="stSidebar"] div[data-testid="stPills"] button span,
+section[data-testid="stSidebar"] div[data-testid="stPills"] [role="checkbox"] span,
+section[data-testid="stSidebar"] div[data-testid="stPills"] [data-baseweb="tag"] span {
     color: #ffffff !important;
 }
 
-/* 2. Estado Activado / Seleccionado (AZUL) */
-section[data-testid="stSidebar"] [data-testid="stPills"] [aria-selected="true"] {
-    background-color: #0284c7 !important; /* Azul celeste */
-    border: 1px solid #38bdf8 !important; /* Borde azul brillante */
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4) !important;
+/* Hover en inactivo */
+section[data-testid="stSidebar"] div[data-testid="stPills"] button:hover,
+section[data-testid="stSidebar"] div[data-testid="stPills"] [role="checkbox"]:hover {
+    background-color: #b91c1c !important;
 }
 
-section[data-testid="stSidebar"] [data-testid="stPills"] [aria-selected="true"] span {
+/* 2. ESTADO ACTIVO / SELECCIONADO (AZUL) */
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="true"],
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-checked="true"],
+section[data-testid="stSidebar"] div[data-testid="stPills"] [role="checkbox"][aria-checked="true"],
+section[data-testid="stSidebar"] div[data-testid="stPills"] [aria-selected="true"] {
+    background-color: #0284c7 !important; /* Azul */
+    border: 1px solid #38bdf8 !important;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="true"] span,
+section[data-testid="stSidebar"] div[data-testid="stPills"] [role="checkbox"][aria-checked="true"] span,
+section[data-testid="stSidebar"] div[data-testid="stPills"] [aria-selected="true"] span {
     color: #ffffff !important;
     font-weight: 700 !important;
 }
 
-/* Hover en estado activado (Azul más oscuro) */
-section[data-testid="stSidebar"] [data-testid="stPills"] [aria-selected="true"]:hover {
-    background-color: #0369a1 !important;
-    border-color: #7dd3fc !important;
-}
-
 /* Botón Limpiar Filtros */
-section[data-testid="stSidebar"] button {
+section[data-testid="stSidebar"] > div:first-child button {
     background-color: #0284c7 !important;
     color: #ffffff !important;
     border: none !important;
@@ -98,7 +99,7 @@ section[data-testid="stSidebar"] button {
     transition: all 0.2s ease-in-out;
 }
 
-section[data-testid="stSidebar"] button:hover {
+section[data-testid="stSidebar"] > div:first-child button:hover {
     background-color: #0369a1 !important;
     transform: translateY(-1px);
 }
