@@ -296,6 +296,8 @@ with tab1:
             st.plotly_chart(fig_bar, use_container_width=True)
 
         st.markdown("### 📋 Listado Detallado de Películas")
+        
+        # AGREGADA LA COLUMNA es_blockbuster A LA LISTA
         cols_mostrar = [
             "titulo_final",
             "anio",
@@ -305,6 +307,7 @@ with tab1:
             "roi",
             "popularidad",
             "promedio_votos",
+            "es_blockbuster",
             "cluster",
         ]
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
@@ -323,6 +326,8 @@ with tab1:
                 "roi": st.column_config.NumberColumn("📈 ROI", format="%.2fx", width="small"),
                 "popularidad": st.column_config.NumberColumn("Popularidad TMDB", format="%.1f", width="small"),
                 "promedio_votos": st.column_config.NumberColumn("Promedio Votos", format="%.1f", width="small"),
+                # CONFIGURACIÓN PARA MOSTRAR es_blockbuster COMO CHECKBOX/BOOLEANO
+                "es_blockbuster": st.column_config.CheckboxColumn("🚀 ¿Blockbuster?", width="small"),
                 "cluster": st.column_config.TextColumn("Cluster", width="small"),
             },
         )
