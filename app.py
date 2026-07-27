@@ -40,7 +40,7 @@ st.caption("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Mo
 st.markdown("---")
 
 # ==============================================================================
-# INICIALIZACIÓN DE SESSION STATE
+# INICIALIZACIÓN DE SESSION STATE Y FUNCIONES DE CALLBACK
 # ==============================================================================
 OPCIONES_DECADAS = sorted(df["decada"].dropna().unique().tolist())
 OPCIONES_CLUSTERS = sorted(df["cluster"].unique())
@@ -55,7 +55,13 @@ if "filtro_anio_exacto" not in st.session_state:
 if "filtro_ranking" not in st.session_state:
     st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
 
-# Estado de checkboxes
+# Estado inicial para 'Seleccionar Todos'
+if "chk_todas_decadas" not in st.session_state:
+    st.session_state.chk_todas_decadas = True
+if "chk_todos_clusters" not in st.session_state:
+    st.session_state.chk_todos_clusters = True
+
+# Estado inicial para cada checkbox individual
 for dec in OPCIONES_DECADAS:
     key_dec = f"chk_dec_{dec}"
     if key_dec not in st.session_state:
@@ -67,16 +73,27 @@ for cls in OPCIONES_CLUSTERS:
         st.session_state[key_cls] = True
 
 
+# Callbacks para la lógica 'Seleccionar Todos'
+def toggle_todas_decadas():
+    estado = st.session_state.chk_todas_decadas
+    for dec in OPCIONES_DECADAS:
+        st.session_state[f"chk_dec_{dec}"] = estado
+
+def toggle_todos_clusters():
+    estado = st.session_state.chk_todos_clusters
+    for cls in OPCIONES_CLUSTERS:
+        st.session_state[f"chk_cls_{cls}"] = estado
+
 def reiniciar_filtros():
     st.session_state.filtro_busqueda = ""
     st.session_state.filtro_anio_exacto = ""
     st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
     
-    for dec in OPCIONES_DECADAS:
-        st.session_state[f"chk_dec_{dec}"] = True
-        
-    for cls in OPCIONES_CLUSTERS:
-        st.session_state[f"chk_cls_{cls}"] = True
+    st.session_state.chk_todas_decadas = True
+    toggle_todas_decadas()
+    
+    st.session_state.chk_todos_clusters = True
+    toggle_todos_clusters()
 
 
 # ==============================================================================
@@ -96,9 +113,15 @@ st.sidebar.text_input(
     placeholder="Ej: Avatar, Star Wars...",
 )
 
-# DÉCADAS EN CHECKBOXES
+# CHECKBOXES DE DÉCADAS CON "SELECCIONAR TODOS"
 decadas_seleccionadas = []
 with st.sidebar.expander("🗓️ Selección de Décadas", expanded=True):
+    st.checkbox(
+        "☑️ Seleccionar todas",
+        key="chk_todas_decadas",
+        on_change=toggle_todas_decadas
+    )
+    st.markdown("---")
     for dec in OPCIONES_DECADAS:
         if st.checkbox(str(dec), key=f"chk_dec_{dec}"):
             decadas_seleccionadas.append(dec)
@@ -117,9 +140,15 @@ st.sidebar.slider(
     help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)",
 )
 
-# CLUSTERS EN CHECKBOXES
+# CHECKBOXES DE CLUSTERS CON "SELECCIONAR TODOS"
 clusters_seleccionados = []
 with st.sidebar.expander("🎯 Cluster (K-Means)", expanded=True):
+    st.checkbox(
+        "☑️ Seleccionar todos",
+        key="chk_todos_clusters",
+        on_change=toggle_todos_clusters
+    )
+    st.markdown("---")
     for cls in OPCIONES_CLUSTERS:
         if st.checkbox(f"Cluster {cls}", key=f"chk_cls_{cls}"):
             clusters_seleccionados.append(cls)
