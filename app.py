@@ -213,83 +213,28 @@ with tab1:
     roi_prom = f"{df_filtrado['roi'].mean():.2f}x" if total_pelis > 0 else "0x"
     voto_prom = f"{df_filtrado['promedio_votos'].mean():.1f} / 10" if total_pelis > 0 else "0"
 
-    col1.metric("Películas", total_pelis)
-    col2.metric("Presupuesto Prom.", pres_prom)
-    col3.metric("Recaudación Prom.", rec_prom)
-    col4.metric("ROI Promedio", roi_prom)
-    col5.metric("Prom. Votos", voto_prom)
+    # Tarjetas individuales con borde para cada métrica
+    with col1:
+        with st.container(border=True):
+            st.metric("Películas", total_pelis)
+
+    with col2:
+        with st.container(border=True):
+            st.metric("Presupuesto Prom.", pres_prom)
+
+    with col3:
+        with st.container(border=True):
+            st.metric("Recaudación Prom.", rec_prom)
+
+    with col4:
+        with st.container(border=True):
+            st.metric("ROI Promedio", roi_prom)
+
+    with col5:
+        with st.container(border=True):
+            st.metric("Prom. Votos", voto_prom)
 
     st.markdown("---")
-
-    if not df_filtrado.empty:
-        c1, c2 = st.columns(2)
-
-        with c1:
-            st.markdown("### Distribución de Recaudación Mundial (Escala Log)")
-            fig_hist = px.histogram(
-                df_filtrado,
-                x="log_recaudacion",
-                color="decada",
-                marginal="rug",
-                title="Distribución de Recaudación según Filtros",
-                template="plotly_white",
-            )
-            fig_hist.update_traces(marker_line_color="#0f172a", marker_line_width=1, opacity=0.85)
-            st.plotly_chart(fig_hist, use_container_width=True)
-
-        with c2:
-            st.markdown("### Top Películas Más Taquilleras del Filtro")
-            top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
-            fig_bar = px.bar(
-                top10,
-                x="recaudacion_usd",
-                y="titulo_final",
-                orientation="h",
-                color="posicion_ranking",
-                color_continuous_scale="Viridis",
-                title="Top Recaudación en USD",
-                labels={
-                    "recaudacion_usd": "USD",
-                    "titulo_final": "Película",
-                    "posicion_ranking": "Puesto Ranking",
-                },
-                template="plotly_white",
-            )
-            fig_bar.update_traces(marker_line_color="#1e293b", marker_line_width=1.5, opacity=0.9)
-            fig_bar.update_layout(yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(fig_bar, use_container_width=True)
-
-        st.markdown("### 📋 Listado Detallado de Películas")
-        cols_mostrar = [
-            "titulo_final",
-            "anio",
-            "posicion_ranking",
-            "presupuesto_usd",
-            "recaudacion_usd",
-            "roi",
-            "popularidad",
-            "promedio_votos",
-            "cluster",
-        ]
-        cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
-
-        df_tabla_ordenada = df_filtrado[cols_existentes].sort_values(by="recaudacion_usd", ascending=False)
-
-        st.dataframe(
-            df_tabla_ordenada,
-            use_container_width=True,
-            column_config={
-                "titulo_final": st.column_config.TextColumn("Película", width="medium"),
-                "anio": st.column_config.NumberColumn("Año", format="%d", width="small"),
-                "posicion_ranking": st.column_config.NumberColumn("🏆 Puesto Ranking", format="#%d", width="small"),
-                "presupuesto_usd": st.column_config.NumberColumn("💸 Presupuesto USD", format="$%d", width="medium"),
-                "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d", width="medium"),
-                "roi": st.column_config.NumberColumn("📈 ROI", format="%.2fx", width="small"),
-                "popularidad": st.column_config.NumberColumn("Popularidad TMDB", format="%.1f", width="small"),
-                "promedio_votos": st.column_config.NumberColumn("Promedio Votos", format="%.1f", width="small"),
-                "cluster": st.column_config.TextColumn("Cluster", width="small"),
-            },
-        )
 
 with tab2:
     st.subheader("Agrupamiento por Similitud (K-Means)")
