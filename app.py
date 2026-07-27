@@ -10,120 +10,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# ==============================================================================
-# ESTILO CSS PERSONALIZADO (CORREGIDO PARA CHECKBOXES)
-# ==============================================================================
-estilo_cine_css = """
-<style>
-/* Fondo general gris claro suave */
-.stApp {
-    background-color: #f8fafc;
-    color: #0f172a;
-}
-
-/* BARRA LATERAL (Sidebar) */
-section[data-testid="stSidebar"] {
-    background-color: #1e293b !important;
-    border-right: 1px solid #cbd5e1;
-}
-
-/* Encabezados, etiquetas y textos generales en Sidebar */
-section[data-testid="stSidebar"] h1, 
-section[data-testid="stSidebar"] h2, 
-section[data-testid="stSidebar"] h3,
-section[data-testid="stSidebar"] label,
-section[data-testid="stSidebar"] .stMarkdown,
-section[data-testid="stSidebar"] p {
-    color: #f8fafc !important;
-}
-
-/* INPUTS DE TEXTO EN SIDEBAR */
-section[data-testid="stSidebar"] input[type="text"] {
-    background-color: #0f172a !important;
-    color: #bab0af !important;
-    border-radius: 8px !important;
-    border: 1px solid #475569 !important;
-}
-
-/* CONTENEDORES EXPANDERS EN SIDEBAR */
-section[data-testid="stSidebar"] div[data-testid="stExpander"] {
-    background-color: #0f172a !important;
-    border: 1px solid #475569 !important;
-    border-radius: 8px !important;
-    margin-bottom: 12px;
-}
-
-/* ESTILOS ESPECÍFICOS PARA CHECKBOXES Y SUS ETIQUETAS */
-section[data-testid="stSidebar"] div[data-testid="stCheckbox"] {
-    background-color: transparent !important;
-    padding: 2px 4px !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stCheckbox"] label {
-    background-color: transparent !important;
-    color: #f8fafc !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stCheckbox"] label span {
-    background-color: transparent !important;
-    color: #f8fafc !important;
-}
-
-/* Botón Limpiar Filtros */
-section[data-testid="stSidebar"] button {
-    background-color: #0284c7 !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-weight: bold !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease-in-out;
-}
-
-section[data-testid="stSidebar"] button:hover {
-    background-color: #0369a1 !important;
-    transform: translateY(-1px);
-}
-
-/* TARJETAS DE MÉTRICAS */
-div[data-testid="stMetric"] {
-    background-color: #ffffff;
-    padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e2e8f0;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-div[data-testid="stMetric"]:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-} 
-
-div[data-testid="stMetricValue"] {
-    color: #0284c7 !important;
-    font-weight: 700;
-}
-
-/* CONTENEDORES DE GRÁFICOS */
-.stPlotlyChart {
-    background-color: #ffffff;
-    border-radius: 12px;
-    padding: 8px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.stApp h1, .stApp h2, .stApp h3 {
-    color: #0f172a !important;
-    font-weight: 700;
-}
-</style>
-"""
-
-st.markdown(estilo_cine_css, unsafe_allow_html=True)
-
-
 # 2. CARGA Y PREPROCESAMIENTO DE DATOS
 @st.cache_data
 def cargar_datos():
@@ -154,7 +40,7 @@ st.caption("Proceso KDD integrado: Scraping + API REST + Clustering K-Means + Mo
 st.markdown("---")
 
 # ==============================================================================
-# INICIALIZACIÓN DE SESSION STATE (Estado de los Filtros)
+# INICIALIZACIÓN DE SESSION STATE
 # ==============================================================================
 OPCIONES_DECADAS = sorted(df["decada"].dropna().unique().tolist())
 OPCIONES_CLUSTERS = sorted(df["cluster"].unique())
@@ -169,7 +55,7 @@ if "filtro_anio_exacto" not in st.session_state:
 if "filtro_ranking" not in st.session_state:
     st.session_state.filtro_ranking = (MIN_RANKING, MAX_RANKING)
 
-# Inicializar estados individuales para cada Checkbox de Décadas y Clusters
+# Estado de checkboxes
 for dec in OPCIONES_DECADAS:
     key_dec = f"chk_dec_{dec}"
     if key_dec not in st.session_state:
@@ -198,11 +84,10 @@ def reiniciar_filtros():
 # ==============================================================================
 st.sidebar.header("🔍 Filtros Interactivos")
 
-st.sidebar.button(
-    "🧹 Limpiar todos los filtros",
-    on_click=reiniciar_filtros,
-    use_container_width=True,
-)
+if st.sidebar.button("🧹 Limpiar todos los filtros", use_container_width=True):
+    reiniciar_filtros()
+    st.rerun()
+
 st.sidebar.markdown("---")
 
 st.sidebar.text_input(
@@ -211,7 +96,7 @@ st.sidebar.text_input(
     placeholder="Ej: Avatar, Star Wars...",
 )
 
-# CHECKBOXES DE DÉCADAS
+# DÉCADAS EN CHECKBOXES
 decadas_seleccionadas = []
 with st.sidebar.expander("🗓️ Selección de Décadas", expanded=True):
     for dec in OPCIONES_DECADAS:
@@ -232,7 +117,7 @@ st.sidebar.slider(
     help="Filtra las películas según su puesto en el Top Anual (ej: Top 1 al 5)",
 )
 
-# CHECKBOXES DE CLUSTERS
+# CLUSTERS EN CHECKBOXES
 clusters_seleccionados = []
 with st.sidebar.expander("🎯 Cluster (K-Means)", expanded=True):
     for cls in OPCIONES_CLUSTERS:
@@ -240,7 +125,7 @@ with st.sidebar.expander("🎯 Cluster (K-Means)", expanded=True):
             clusters_seleccionados.append(cls)
 
 # ==============================================================================
-# LÓGICA DE FILTRADO DINÁMICO REFRESCADO
+# LÓGICA DE FILTRADO DINÁMICO
 # ==============================================================================
 df_filtrado = df.copy()
 
@@ -252,9 +137,7 @@ if st.session_state.filtro_busqueda.strip() != "":
     ]
 
 if decadas_seleccionadas:
-    df_filtrado = df_filtrado[
-        df_filtrado["decada"].isin(decadas_seleccionadas)
-    ]
+    df_filtrado = df_filtrado[df_filtrado["decada"].isin(decadas_seleccionadas)]
 else:
     df_filtrado = df_filtrado.iloc[0:0]
 
@@ -273,9 +156,7 @@ if "posicion_ranking" in df_filtrado.columns:
     ]
 
 if clusters_seleccionados:
-    df_filtrado = df_filtrado[
-        df_filtrado["cluster"].isin(clusters_seleccionados)
-    ]
+    df_filtrado = df_filtrado[df_filtrado["cluster"].isin(clusters_seleccionados)]
 else:
     df_filtrado = df_filtrado.iloc[0:0]
 
@@ -298,22 +179,10 @@ with tab1:
     col1, col2, col3, col4, col5 = st.columns(5)
     total_pelis = len(df_filtrado)
 
-    pres_prom = (
-        f"${df_filtrado['presupuesto_usd'].mean():,.0f} USD"
-        if total_pelis > 0
-        else "$0 USD"
-    )
-    rec_prom = (
-        f"${df_filtrado['recaudacion_usd'].mean():,.0f} USD"
-        if total_pelis > 0
-        else "$0 USD"
-    )
+    pres_prom = f"${df_filtrado['presupuesto_usd'].mean():,.0f} USD" if total_pelis > 0 else "$0 USD"
+    rec_prom = f"${df_filtrado['recaudacion_usd'].mean():,.0f} USD" if total_pelis > 0 else "$0 USD"
     roi_prom = f"{df_filtrado['roi'].mean():.2f}x" if total_pelis > 0 else "0x"
-    voto_prom = (
-        f"{df_filtrado['promedio_votos'].mean():.1f} / 10"
-        if total_pelis > 0
-        else "0"
-    )
+    voto_prom = f"{df_filtrado['promedio_votos'].mean():.1f} / 10" if total_pelis > 0 else "0"
 
     col1.metric("Películas", total_pelis)
     col2.metric("Presupuesto Prom.", pres_prom)
@@ -336,16 +205,12 @@ with tab1:
                 title="Distribución de Recaudación según Filtros",
                 template="plotly_white",
             )
-            fig_hist.update_traces(
-                marker_line_color="#0f172a", marker_line_width=1, opacity=0.85
-            )
+            fig_hist.update_traces(marker_line_color="#0f172a", marker_line_width=1, opacity=0.85)
             st.plotly_chart(fig_hist, use_container_width=True)
 
         with c2:
             st.markdown("### Top Películas Más Taquilleras del Filtro")
-            top10 = df_filtrado.sort_values(
-                by="recaudacion_usd", ascending=False
-            ).head(10)
+            top10 = df_filtrado.sort_values(by="recaudacion_usd", ascending=False).head(10)
             fig_bar = px.bar(
                 top10,
                 x="recaudacion_usd",
@@ -361,9 +226,7 @@ with tab1:
                 },
                 template="plotly_white",
             )
-            fig_bar.update_traces(
-                marker_line_color="#1e293b", marker_line_width=1.5, opacity=0.9
-            )
+            fig_bar.update_traces(marker_line_color="#1e293b", marker_line_width=1.5, opacity=0.9)
             fig_bar.update_layout(yaxis={"categoryorder": "total ascending"})
             st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -381,38 +244,20 @@ with tab1:
         ]
         cols_existentes = [c for c in cols_mostrar if c in df_filtrado.columns]
 
-        df_tabla_ordenada = df_filtrado[cols_existentes].sort_values(
-            by="recaudacion_usd", ascending=False
-        )
+        df_tabla_ordenada = df_filtrado[cols_existentes].sort_values(by="recaudacion_usd", ascending=False)
 
         st.dataframe(
             df_tabla_ordenada,
             use_container_width=True,
             column_config={
-                "titulo_final": st.column_config.TextColumn(
-                    "Película", width="medium"
-                ),
-                "anio": st.column_config.NumberColumn(
-                    "Año", format="%d", width="small"
-                ),
-                "posicion_ranking": st.column_config.NumberColumn(
-                    "🏆 Puesto Ranking", format="#%d", width="small"
-                ),
-                "presupuesto_usd": st.column_config.NumberColumn(
-                    "💸 Presupuesto USD", format="$%d", width="medium"
-                ),
-                "recaudacion_usd": st.column_config.NumberColumn(
-                    "💵 Recaudación USD", format="$%d", width="medium"
-                ),
-                "roi": st.column_config.NumberColumn(
-                    "📈 ROI", format="%.2fx", width="small"
-                ),
-                "popularidad": st.column_config.NumberColumn(
-                    "Popularidad TMDB", format="%.1f", width="small"
-                ),
-                "promedio_votos": st.column_config.NumberColumn(
-                    "Promedio Votos", format="%.1f", width="small"
-                ),
+                "titulo_final": st.column_config.TextColumn("Película", width="medium"),
+                "anio": st.column_config.NumberColumn("Año", format="%d", width="small"),
+                "posicion_ranking": st.column_config.NumberColumn("🏆 Puesto Ranking", format="#%d", width="small"),
+                "presupuesto_usd": st.column_config.NumberColumn("💸 Presupuesto USD", format="$%d", width="medium"),
+                "recaudacion_usd": st.column_config.NumberColumn("💵 Recaudación USD", format="$%d", width="medium"),
+                "roi": st.column_config.NumberColumn("📈 ROI", format="%.2fx", width="small"),
+                "popularidad": st.column_config.NumberColumn("Popularidad TMDB", format="%.1f", width="small"),
+                "promedio_votos": st.column_config.NumberColumn("Promedio Votos", format="%.1f", width="small"),
                 "cluster": st.column_config.TextColumn("Cluster", width="small"),
             },
         )
@@ -422,19 +267,12 @@ with tab2:
     if not df_filtrado.empty:
         eje_x_opcion = st.radio(
             "Seleccionar eje X para visualizar los clusters:",
-            options=[
-                "Conteo de Votos (log_votos)",
-                "Presupuesto en USD (log_presupuesto)",
-            ],
+            options=["Conteo de Votos (log_votos)", "Presupuesto en USD (log_presupuesto)"],
             horizontal=True,
         )
 
         eje_x = "log_votos" if "Votos" in eje_x_opcion else "log_presupuesto"
-        titulo_eje_x = (
-            "Log(Conteo de Votos)"
-            if eje_x == "log_votos"
-            else "Log(Presupuesto USD)"
-        )
+        titulo_eje_x = "Log(Conteo de Votos)" if eje_x == "log_votos" else "Log(Presupuesto USD)"
 
         fig_scatter = px.scatter(
             df_filtrado,
@@ -443,19 +281,11 @@ with tab2:
             color="cluster",
             size="popularidad",
             hover_name="titulo_final",
-            hover_data=[
-                "anio",
-                "posicion_ranking",
-                "presupuesto_usd",
-                "recaudacion_usd",
-                "roi",
-            ],
+            hover_data=["anio", "posicion_ranking", "presupuesto_usd", "recaudacion_usd", "roi"],
             title=f"Clusters: {titulo_eje_x} vs. Log(Recaudación USD)",
             template="plotly_white",
         )
-        fig_scatter.update_traces(
-            marker=dict(line=dict(width=1, color="DarkSlateGrey"))
-        )
+        fig_scatter.update_traces(marker=dict(line=dict(width=1, color="DarkSlateGrey")))
         st.plotly_chart(fig_scatter, use_container_width=True)
 
 with tab3:
@@ -486,10 +316,7 @@ with tab3:
                 )
                 st.plotly_chart(fig_reg, use_container_width=True)
 
-                st.info(
-                    "💡 **Variables determinantes:** Presupuesto en USD, Conteo"
-                    " de Votos y Popularidad en TMDB."
-                )
+                st.info("💡 **Variables determinantes:** Presupuesto en USD, Conteo de Votos y Popularidad en TMDB.")
 
     with col_b:
         with st.container(border=True):
@@ -517,10 +344,7 @@ with tab3:
                 fig_class.update_layout(showlegend=False)
                 st.plotly_chart(fig_class, use_container_width=True)
 
-                st.success(
-                    "🎯 **Evaluación:** El modelo clasifica correctamente el Top 25%"
-                    " de recaudación integrando popularidad y presupuesto."
-                )
+                st.success("🎯 **Evaluación:** El modelo clasifica correctamente el Top 25% de recaudación integrando popularidad y presupuesto.")
 
 with tab4:
     st.subheader("Conclusiones y Hallazgos Principales")
