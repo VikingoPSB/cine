@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# ESTILO CSS PERSONALIZADO (CORREGIDO PARA ST.PILLS)
+# ESTILO CSS PERSONALIZADO (BOTONES DESACTIVADOS EN ROJO)
 # ==============================================================================
 estilo_cine_css = """
 <style>
@@ -47,32 +47,32 @@ section[data-testid="stSidebar"] div[role="combobox"] {
 
 /* BOTONES DE SELECCIÓN DE CLUSTERS (Pills / BaseWeb Tags) */
 
-/* 1. Estado Desactivado / Inactivo */
+/* 1. Estado Desactivado / Inactivo (ROJO) */
 section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"] {
-    background-color: #334155 !important;
-    border: 1px solid #475569 !important;
+    background-color: #991b1b !important; /* Rojo oscuro */
+    border: 1px solid #f87171 !important;  /* Borde rojo claro */
     transition: all 0.2s ease-in-out !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"] span {
-    color: #cbd5e1 !important;
+    color: #fef2f2 !important; /* Texto blanco rojizo */
     font-weight: 500 !important;
 }
 
-/* Hover en estado desactivado */
+/* Hover en estado desactivado (Rojo un poco más brillante) */
 section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"]:hover {
-    background-color: #475569 !important;
-    border-color: #94a3b8 !important;
+    background-color: #b91c1c !important;
+    border-color: #fca5a5 !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stPills"] [data-baseweb="tag"]:hover span {
     color: #ffffff !important;
 }
 
-/* 2. Estado Activado / Seleccionado */
+/* 2. Estado Activado / Seleccionado (AZUL) */
 section[data-testid="stSidebar"] [data-testid="stPills"] [aria-selected="true"] {
-    background-color: #0284c7 !important;
-    border: 1px solid #38bdf8 !important;
+    background-color: #0284c7 !important; /* Azul celeste */
+    border: 1px solid #38bdf8 !important; /* Borde azul brillante */
     box-shadow: 0 0 8px rgba(56, 189, 248, 0.4) !important;
 }
 
@@ -81,7 +81,7 @@ section[data-testid="stSidebar"] [data-testid="stPills"] [aria-selected="true"] 
     font-weight: 700 !important;
 }
 
-/* Hover en estado activado */
+/* Hover en estado activado (Azul más oscuro) */
 section[data-testid="stSidebar"] [data-testid="stPills"] [aria-selected="true"]:hover {
     background-color: #0369a1 !important;
     border-color: #7dd3fc !important;
@@ -475,7 +475,7 @@ with tab4:
             * **Impacto Digital Moderno y Financiero:** Se observa una correlación directa entre el presupuesto asignado y la recaudación obtenida, potenciada por la popularidad en TMDB en la era digital (2010+).
             
             * **Efecto de Clusters:**
-                * **Cluster 0 (Clásicos y Éxitos Moderados):** Películas con presupuestos acotados, excelente votación y retorno comercial sustained.
+                * **Cluster 0 (Clásicos y Éxitos Moderados):** Películas con presupuestos acotados, excelente votación y retorno comercial sostenido.
                 * **Cluster 1 (Blockbusters Masivos):** Producciones de presupuesto elevado y recaudación masiva, dominado por franquicias y sagas globales.
                 * **Cluster 2 (Rendimiento Medio):** Producciones con niveles intermedios de inversión e impacto de taquilla acotado.
             """
